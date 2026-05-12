@@ -80,6 +80,11 @@ class Transform:
     
     @parent.setter
     def parent(self, value: Transform | None) -> None:
+        if value is self:
+            raise ValueError("A transform cannot be its own parent")
+        if isinstance(value, Transform) and value is not self.__parent and self.__is_descendant(value):
+            raise ValueError("Cannot set a descendant as parent")
+
         if self.__parent is not None:
             self.__parent.__remove_child(self)
 
@@ -147,6 +152,12 @@ class Transform:
     def __remove_child(self, transform: Transform) -> None:
         if transform in self.__children:
             self.__children.remove(transform)
+
+    def __is_descendant(self, transform: Transform) -> bool:
+        for child in self.__children:
+            if child is transform or child.__is_descendant(transform):
+                return True
+        return False
 
     def __update_children(self) -> None:
         for child in self.__children:

@@ -500,15 +500,21 @@ class TestTransformStr:
 class TestTransformEdgeCases:
     """Test boundary conditions and unusual scenarios."""
 
-    def test_self_parent_does_not_crash(self):
-        # Setting a transform as its own parent should not cause infinite
-        # recursion. It may not be meaningful, but it shouldn't crash.
+    def test_self_parent_raises_value_error(self):
+        # A transform cannot be its own parent.
         t = make_identity_transform("t")
-        # This would cause infinite recursion in __update_children
-        # if not handled. Current impl will add itself as child.
-        # We just verify it doesn't hang — if this test completes, it passes.
-        # NOTE: this is inherently dangerous; skip if the implementation
-        # does not guard against it.
+        with pytest.raises(ValueError, match="cannot be its own parent"):
+            t.parent = t
+
+    def test_descendant_parent_raises_value_error(self):
+        # Parenting a node to one of its descendants must be prevented.
+        root = make_identity_transform("root")
+        child = make_transform("child", 1, 0, 0)
+        grandchild = make_transform("grandchild", 1, 0, 0)
+        child.parent = root
+        grandchild.parent = child
+        with pytest.raises(ValueError, match="Cannot set a descendant as parent"):
+            root.parent = grandchild
 
     def test_deep_hierarchy(self):
         # A 10-level hierarchy should correctly accumulate positions.
