@@ -1,77 +1,85 @@
 from __future__ import annotations
 
-from vector import Vec3, Vec4
-from quaternion import Quaternion
+from typing import Iterator
+from .vector import Vec3, Vec4
+from .quaternion import Quaternion
+
 
 class Transform:
     __slots__ = '__name', '__local_position', '__local_rotation', '__position', '__rotation', '__parent', '__children'
 
-    def __init__(self, name: str, pos: Vec3, rot: Quaternion):
-        assert isinstance(pos, Vec3)
-        assert isinstance(rot, Quaternion)
+    def __init__(self, pos: Vec3, rot: Quaternion, name: str = "") -> None:
+        if not isinstance(pos, Vec3):
+            raise TypeError(f"pos must be Vec3, got {type(pos).__name__}")
+        if not isinstance(rot, Quaternion):
+            raise TypeError(f"rot must be Quaternion, got {type(rot).__name__}")
 
-        self.__name = name
-        self.__local_position = pos
-        self.__local_rotation = rot
-        self.__position = pos
-        self.__rotation = rot
-        self.__parent = None
-        self.__children = []
+        self.__name: str = name
+        self.__local_position: Vec3 = pos
+        self.__local_rotation: Quaternion = rot
+        self.__position: Vec3 = pos
+        self.__rotation: Quaternion = rot
+        self.__parent: Transform | None = None
+        self.__children: list[Transform] = []
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__name
 
     @property
-    def local_position(self):
+    def local_position(self) -> Vec3:
         return self.__local_position
     
     @local_position.setter
-    def local_position(self, value):
-        assert isinstance(value, Vec3)
+    def local_position(self, value: Vec3) -> None:
+        if not isinstance(value, Vec3):
+            raise TypeError(f"local_position must be Vec3, got {type(value).__name__}")
         self.__local_position = value
-        self.__position = self.__local_position if self.__parent == None else (self.__parent.rotation * self.__local_position) + self.__parent.position
+        self.__position = self.__local_position if self.__parent is None else (self.__parent.rotation * self.__local_position) + self.__parent.position
         self.__update_children()
 
     @property
-    def local_rotation(self):
+    def local_rotation(self) -> Quaternion:
         return self.__local_rotation
     
     @local_rotation.setter
-    def local_rotation(self, value):
-        assert isinstance(value, Quaternion)
+    def local_rotation(self, value: Quaternion) -> None:
+        if not isinstance(value, Quaternion):
+            raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
         self.__local_rotation = value
-        self.__rotation = self.__local_rotation if self.__parent == None else self.__parent.rotation * self.__local_rotation
+        self.__rotation = self.__local_rotation if self.__parent is None else self.__parent.rotation * self.__local_rotation
         self.__update_children()
 
     @property
-    def position(self):
+    def position(self) -> Vec3:
         return self.__position
     
     @position.setter
-    def position(self, value):
-        assert isinstance(value, Vec3)
+    def position(self, value: Vec3) -> None:
+        if not isinstance(value, Vec3):
+            raise TypeError(f"position must be Vec3, got {type(value).__name__}")
         self.__position = value
-        self.__local_position = self.__position if self.__parent == None else (self.__parent.rotation.inverse() * self.__position) + self.__parent.position.inverse()
+        self.__local_position = self.__position if self.__parent is None else self.__parent.rotation.inverse() * (self.__position - self.__parent.position)
         self.__update_children()
 
     @property
-    def rotation(self):
+    def rotation(self) -> Quaternion:
         return self.__rotation
     
     @rotation.setter
-    def rotation(self, value):
-        assert isinstance(value, Quaternion)
+    def rotation(self, value: Quaternion) -> None:
+        if not isinstance(value, Quaternion):
+            raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
         self.__rotation = value
-        self.__local_rotation = self.__rotation if self.__parent == None else self.__parent.rotation.inverse() * self.__rotation
+        self.__local_rotation = self.__rotation if self.__parent is None else self.__parent.rotation.inverse() * self.__rotation
         self.__update_children()
 
     @property
-    def parent(self):
+    def parent(self) -> Transform | None:
         return self.__parent
     
     @parent.setter
-    def parent(self, value: Transform | None):
+    def parent(self, value: Transform | None) -> None:
         if self.__parent is not None:
             self.__parent.__remove_child(self)
 
@@ -87,78 +95,65 @@ class Transform:
 
         self.__update_children()
     
+    def __repr__(self) -> str:
+        return f"Transform({self.name!r}, {self.position!r}, {self.rotation!r})"
+
     def __str__(self) -> str:
         return self.name + ": [Pos: " + str(self.position) + ", Rot: " + str(self.rotation.toEuler()) + "]"
 
-    def __mul__(self, other):
+    def __mul__(self, other: Transform | Vec3 | Vec4) -> Transform | Vec3 | Vec4:
         if isinstance(other, Transform):
-            return Transform((self.rotation * other.position) + self.position, self.rotation * other.rotation)
+            return Transform((self.rotation * other.position) + self.position, self.rotation * other.rotation, self.name + "*" + other.name)
         elif isinstance(other, Vec3):
             return (self.rotation * other) + self.position
         elif isinstance(other, Vec4):
             return Vec4((self.rotation * other.xyz) + (self.position * other.w), other.w)
-        raise TypeError
+        raise TypeError(f"Cannot multiply Transform by {type(other).__name__}")
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.__children)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Transform]:
         return iter(self.__children)
     
-    def __getitem__(self, items):
+    def __getitem__(self, items: int | slice) -> Transform:
         return self.__children[items]
 
-    def __setitem__(self, key, newvalue):
-        assert isinstance(newvalue, Transform)
+    def __setitem__(self, key: int, newvalue: Transform) -> None:
+        if not isinstance(newvalue, Transform):
+            raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
         self.__children[key] = newvalue
         self.__children[key].parent = self
 
-    def inverse(self):
+    def inverse(self) -> Transform:
         inv_rot = self.rotation.inverse()
         inv_pos = inv_rot * self.position.inverse()
-        return Transform(inv_pos, inv_rot)
+        return Transform(inv_pos, inv_rot, self.name + "_inv")
     
-    def rotate(self, rotation: Quaternion):
+    def rotate(self, rotation: Quaternion) -> None:
         self.rotation = self.rotation * rotation
     
-    def translate(self, translation: Vec3):
+    def translate(self, translation: Vec3) -> None:
         self.position = (self.rotation * translation) + self.position
 
     def add_child(self, transform: Transform) -> None:
-        assert isinstance(transform, Transform)
+        if not isinstance(transform, Transform):
+            raise TypeError(f"child must be Transform, got {type(transform).__name__}")
         transform.parent = self
 
     def __add_child(self, transform: Transform) -> None:
-        assert isinstance(transform, Transform)
         self.__children.append(transform)
 
     def __remove_child(self, transform: Transform) -> None:
         if transform in self.__children:
             self.__children.remove(transform)
 
-    def __update_children(self):
+    def __update_children(self) -> None:
         for child in self.__children:
             child.parent = self
 
-    def world_to_local(self, world_pos: Vec3):
+    def world_to_local(self, world_pos: Vec3) -> Vec3:
         return self.rotation.inverse() * (world_pos - self.position)
     
-    def local_to_world(self, local_pos: Vec3):
+    def local_to_world(self, local_pos: Vec3) -> Vec3:
         return self.rotation * local_pos + self.position
-
-
-    
-
-t1 = Transform("t1", Vec3(1, 0, 0), Quaternion.fromEuler(0, 0, 0))
-t2 = Transform("t2", Vec3(2, 0, 0), Quaternion.fromEuler(0, 0, 0))
-t3 = Transform("t3", Vec3(3, 0, 0), Quaternion.fromEuler(0, 0, 0))
-
-t2.parent = t1
-t3.parent = t2
-
-#t1.add_child(t2)
-print(t2, t3)
-
-print(t2.world_to_local(Vec3(4, 0, 0)))
-print(t2.local_to_world(Vec3(4, 0, 0)))
-

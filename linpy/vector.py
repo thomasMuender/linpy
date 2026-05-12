@@ -1,18 +1,23 @@
 from __future__ import annotations
 
 import math
+from typing import Iterator, Union
 import numpy as np
-from util import rsqrt, name_to_idx, has_unique_characters, highest_idx
+from .util import rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS
+
+# Type alias for scalar values accepted in arithmetic
+Scalar = Union[int, float]
+
 
 class Vector:
     __slots__ = 'num', 'values'
 
-    def __init__(self, *args):
+    def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vector) -> None:
         if type(self) not in (Vec2, Vec3, Vec4):
-            raise ValueError
+            raise ValueError("Cannot instantiate Vector directly; use Vec2, Vec3, or Vec4")
 
-        self.num = int(type(self).__name__[-1])
-        self.values = []
+        self.num: int = int(type(self).__name__[-1])
+        self.values: list[float] = []
         
         if len(args) == 1 and isinstance(args[0], (int, float)):
             self.values = [float(args[0])] * self.num
@@ -25,75 +30,110 @@ class Vector:
                 for v in value:
                     self.values.append(float(v))
             elif isinstance(value, np.ndarray):
-                l = value.tolist()
-                for v in l:
+                for v in value.tolist():
                     self.values.append(float(v))
             else:
-                raise NotImplementedError
+                raise NotImplementedError(f"Unsupported argument type: {type(value)}")
             
         if len(self.values) != self.num:
-            raise AttributeError
+            raise AttributeError(
+                f"{type(self).__name__} requires {self.num} components, got {len(self.values)}"
+            )
         
+    def __repr__(self) -> str:
+        args = ', '.join(repr(v) for v in self.values)
+        return f"{type(self).__name__}({args})"
+
     def __str__(self) -> str:
-        return '[' + ', '.join([str(v) for v in self.values]) + ']'
+        return '[' + ', '.join(str(v) for v in self.values) + ']'
     
-    def __len__(self):
+    def __len__(self) -> int:
         return self.num
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[float]:
         return iter(self.values)
-    
-    def __add__(self, other):
-        if type(self) == type(other):
-            return type(self)([a + b for a, b in zip(self, other)])
-        elif isinstance(other, (float, int)):
-            return type(self)([a + other for a in self])
-        raise TypeError
 
-    def __radd__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.values == other.values  # type: ignore[union-attr]
+
+    def __ne__(self, other: object) -> bool:
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.values != other.values  # type: ignore[union-attr]
+
+    def __neg__(self) -> Vector:
+        return type(self)([-v for v in self.values])
+
+    def __add__(self, other: Vector | Scalar) -> Vector:
+        if type(self) is type(other):
+            return type(self)([a + b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
+        elif isinstance(other, (float, int)):
+            return type(self)([a + other for a in self.values])
+        raise TypeError(f"Cannot add {type(other).__name__} to {type(self).__name__}")
+
+    def __radd__(self, other: Scalar) -> Vector:
         if isinstance(other, (float, int)):
             return self + other
+        return NotImplemented  # type: ignore[return-value]
 
-    def __sub__(self, other):
-        if type(self) == type(other):
-            return type(self)([a - b for a, b in zip(self, other)])
+    def __sub__(self, other: Vector | Scalar) -> Vector:
+        if type(self) is type(other):
+            return type(self)([a - b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
-            return type(self)([a - other for a in self])
-        raise TypeError
+            return type(self)([a - other for a in self.values])
+        raise TypeError(f"Cannot subtract {type(other).__name__} from {type(self).__name__}")
 
-    def __mul__(self, other):
-        if type(self) == type(other):
-            return type(self)([a * b for a, b in zip(self, other)])
+    def __rsub__(self, other: Scalar) -> Vector:
+        if isinstance(other, (float, int)):
+            return type(self)([other - a for a in self.values])
+        return NotImplemented  # type: ignore[return-value]
+
+    def __mul__(self, other: Vector | Scalar) -> Vector:
+        if type(self) is type(other):
+            return type(self)([a * b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
-            return type(self)([a * other for a in self])
-        raise TypeError
+            return type(self)([a * other for a in self.values])
+        raise TypeError(f"Cannot multiply {type(self).__name__} by {type(other).__name__}")
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: Scalar) -> Vector:
         if isinstance(other, (float, int)):
             return self * other
+        return NotImplemented  # type: ignore[return-value]
 
-    def __truediv__(self, other):
-        if type(self) == type(other):
-            return type(self)([a / b for a, b in zip(self, other)])
+    def __truediv__(self, other: Vector | Scalar) -> Vector:
+        if type(self) is type(other):
+            return type(self)([a / b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
-            return type(self)([a / other for a in self])
-        raise TypeError
+            return type(self)([a / other for a in self.values])
+        raise TypeError(f"Cannot divide {type(self).__name__} by {type(other).__name__}")
 
-    def __getattr__(self, name):
-        if all(c in ('x', 'y', 'z', 'w') for c in name):
+    def __rtruediv__(self, other: Scalar) -> Vector:
+        if isinstance(other, (float, int)):
+            return type(self)([other / a for a in self.values])
+        return NotImplemented  # type: ignore[return-value]
+
+    def __getattr__(self, name: str) -> float | Vector:
+        if all(c in _VALID_COMPONENTS for c in name):
+            indices = [name_to_idx(n) for n in name]
+            if any(i >= self.num for i in indices):
+                raise IndexError(
+                    f"Component '{name}' out of range for {type(self).__name__}"
+                )
             if len(name) == 1:
-                return self.values[name_to_idx(name)]
-            elif len(name) == 2:
-                return Vec2([self.values[name_to_idx(n)] for n in name])
+                return self.values[indices[0]]
+            vals = [self.values[i] for i in indices]
+            if len(name) == 2:
+                return Vec2(vals)
             elif len(name) == 3:
-                return Vec3([self.values[name_to_idx(n)] for n in name])
+                return Vec3(vals)
             elif len(name) == 4:
-                return Vec4([self.values[name_to_idx(n)] for n in name])
-            else:
-                raise IndexError
-        raise ValueError
+                return Vec4(vals)
+            raise IndexError(f"Swizzle too long: '{name}'")
+        raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
-    def __getitem__(self, items):
+    def __getitem__(self, items: int | slice) -> float | Vector:
         sliced = self.values[items]
         if isinstance(sliced, (int, float)):
             return sliced
@@ -103,62 +143,67 @@ class Vector:
             return Vec3(sliced)
         elif len(sliced) == 4:
             return Vec4(sliced)
-        raise ValueError
+        raise ValueError(f"Slice produced {len(sliced)} elements; expected 2, 3, or 4")
 
-    def __setattr__(self, name, value):
-        set = False
+    def __setattr__(self, name: str, value: Scalar | Vector | list[float] | tuple[float, ...]) -> None:
+        done = False
         if name in __class__.__slots__:
             super().__setattr__(name, value)
-            set = True
-        elif all(c in ('x', 'y', 'z', 'w') for c in name) and highest_idx(name) < self.num and has_unique_characters(name):
+            done = True
+        elif (all(c in _VALID_COMPONENTS for c in name)
+              and highest_idx(name) < self.num
+              and has_unique_characters(name)):
             if isinstance(value, (int, float)):
                 for n in name:
                     self.values[name_to_idx(n)] = float(value)
-                set = True
+                done = True
             elif isinstance(value, (list, tuple, Vec2, Vec3, Vec4)) and 1 < len(name) <= self.num and len(name) == len(value):
                 for i, n in enumerate(name):
                     self.values[name_to_idx(n)] = float(value[i])
-                set = True
-        if not set:
-            raise IndexError
+                done = True
+        if not done:
+            raise IndexError(f"Cannot set '{name}' on {type(self).__name__}")
 
-    #TODO check types and stuff
-    def __setitem__(self, key, newvalue):
-        self.values[key] = newvalue
+    def __setitem__(self, key: int | slice, newvalue: Scalar) -> None:
+        if isinstance(newvalue, (int, float)):
+            self.values[key] = float(newvalue)
+        else:
+            self.values[key] = newvalue
     
-    def dot(self, other) -> float:
-        assert type(self) == type(other)
-        return sum([a * b for a, b in zip(self, other)])
+    def dot(self, other: Vector) -> float:
+        if type(self) is not type(other):
+            raise TypeError(f"dot() requires same type, got {type(other).__name__}")
+        return sum(a * b for a, b in zip(self.values, other.values))
     
     def magnitude(self) -> float:
         return math.sqrt(self.dot(self))
 
     def normalize(self) -> None:
         scale = rsqrt(self.dot(self))
-        self.values = [a * scale for a in self]
+        self.values = [a * scale for a in self.values]
     
-    def normalized(self):
+    def normalized(self) -> Vector:
         return rsqrt(self.dot(self)) * self
     
-    def inverse(self):
-        return self * -1.
+    def inverse(self) -> Vector:
+        return -self
     
-    def sin(self):
-        return type(self)([math.sin(i) for i in self.values])
+    def sin(self) -> Vector:
+        return type(self)([math.sin(v) for v in self.values])
     
-    def cos(self):
-        return type(self)([math.cos(i) for i in self.values])
+    def cos(self) -> Vector:
+        return type(self)([math.cos(v) for v in self.values])
     
-    def degree(self):
-        return type(self)([math.degrees(d) for d in self.values])
+    def degree(self) -> Vector:
+        return type(self)([math.degrees(v) for v in self.values])
     
-    def radians(self):
-        return type(self)([math.radians(d) for d in self.values])
+    def radians(self) -> Vector:
+        return type(self)([math.radians(v) for v in self.values])
     
-    def toList(self):
-        return self.values
+    def toList(self) -> list[float]:
+        return self.values[:]
 
-    def toNumpy(self):
+    def toNumpy(self) -> np.ndarray:
         return np.array(self.values)
 
 
@@ -205,7 +250,7 @@ class Vec3(Vector):
     def z_one(self) -> Vec3:
         return Vec3(0.0, 0.0, 1.0)
     
-    def cross(self, other):
+    def cross(self, other: Vec3) -> Vec3:
         return (self * other.yzx - self.yzx * other).yzx
 
 
