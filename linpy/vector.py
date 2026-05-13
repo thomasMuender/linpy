@@ -210,44 +210,44 @@ class Vector:
 class Vector2(Vector):
     __slots__ = ()
 
-    @property
-    def zero(self) -> Vector2:
+    @staticmethod
+    def zero() -> Vector2:
         return Vector2(0.0, 0.0)
     
-    @property
-    def one(self) -> Vector2:
+    @staticmethod
+    def one() -> Vector2:
         return Vector2(1.0, 1.0)
     
-    @property
-    def x_one(self) -> Vector2:
+    @staticmethod
+    def x_one() -> Vector2:
         return Vector2(1.0, 0.0)
     
-    @property
-    def y_one(self) -> Vector2:
+    @staticmethod
+    def y_one() -> Vector2:
         return Vector2(0.0, 1.0)
 
 
 class Vector3(Vector):
     __slots__ = ()
-    
-    @property
-    def zero(self) -> Vector3:
+
+    @staticmethod
+    def zero() -> Vector3:
         return Vector3(0.0, 0.0, 0.0)
     
-    @property
-    def one(self) -> Vector3:
+    @staticmethod
+    def one() -> Vector3:
         return Vector3(1.0, 1.0, 1.0)
     
-    @property
-    def x_one(self) -> Vector3:
+    @staticmethod
+    def x_one() -> Vector3:
         return Vector3(1.0, 0.0, 0.0)
     
-    @property
-    def y_one(self) -> Vector3:
+    @staticmethod
+    def y_one() -> Vector3:
         return Vector3(0.0, 1.0, 0.0)
     
-    @property
-    def z_one(self) -> Vector3:
+    @staticmethod
+    def z_one() -> Vector3:
         return Vector3(0.0, 0.0, 1.0)
     
     def cross(self, other: Vector3) -> Vector3:
@@ -257,26 +257,26 @@ class Vector3(Vector):
 class Vector4(Vector):
     __slots__ = ()
     
-    @property
-    def zero(self) -> Vector4:
+    @staticmethod
+    def zero() -> Vector4:
         return Vector4(0.0, 0.0, 0.0, 0.0)
     
-    @property
-    def one(self) -> Vector4:
+    @staticmethod
+    def one() -> Vector4:
         return Vector4(1.0, 1.0, 1.0, 1.0)
     
-    @property
-    def x_one(self) -> Vector4:
+    @staticmethod
+    def x_one() -> Vector4:
         return Vector4(1.0, 0.0, 0.0, 0.0)
     
-    @property
-    def y_one(self) -> Vector4:
+    @staticmethod
+    def y_one() -> Vector4:
         return Vector4(0.0, 1.0, 0.0, 0.0)
     
-    @property
-    def z_one(self) -> Vector4:
+    @staticmethod
+    def z_one() -> Vector4:
         return Vector4(0.0, 0.0, 1.0, 0.0)
     
-    @property
-    def w_one(self) -> Vector4:
+    @staticmethod
+    def w_one() -> Vector4:
         return Vector4(0.0, 0.0, 0.0, 1.0)

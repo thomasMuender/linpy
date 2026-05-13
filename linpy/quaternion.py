@@ -103,8 +103,8 @@ class Quaternion:
     def __setitem__(self, key: int | slice, newvalue: Scalar) -> None:
         self.values.__setitem__(key, newvalue)
 
-    @property
-    def identity(self) -> Quaternion:
+    @staticmethod
+    def identity() -> Quaternion:
         return Quaternion(0., 0., 0., 1.)
 
     @staticmethod
@@ -191,7 +191,7 @@ class Quaternion:
             return self.values.dot(other.values)
         elif isinstance(other, Vector4):
             return self.values.dot(other)
-        raise TypeError(f"dot() expects Quaternion or Vector4, got {type(other).__name__}")
+        raise TypeError(f"dot() expects Quaternion or Vec4, got {type(other).__name__}")
 
     def normalize(self) -> None:
         self.values = rsqrt(self.values.dot(self.values)) * self.values

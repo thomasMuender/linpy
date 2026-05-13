@@ -116,13 +116,13 @@ class Transform:
         raise TypeError(f"Cannot multiply Transform by {type(other).__name__}")
     
     def __len__(self) -> int:
-        return len(self.__children)
+        return self.__children.__len__()
 
     def __iter__(self) -> Iterator[Transform]:
-        return iter(self.__children)
+        return self.__children.__iter__()
     
     def __getitem__(self, items: int | slice) -> Transform:
-        return self.__children[items]
+        return self.__children.__getitem__(items)
 
     def __setitem__(self, key: int, newvalue: Transform) -> None:
         if not isinstance(newvalue, Transform):
