@@ -14,7 +14,7 @@ class Vector:
 
     def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vector) -> None:
         if type(self) not in (Vector2, Vector3, Vector4):
-            raise ValueError("Cannot instantiate Vector directly; use Vec2, Vec3, or Vec4")
+            raise ValueError("Cannot instantiate Vector directly; use Vector2, Vector3, or Vector4")
 
         self.num: int = int(type(self).__name__[-1])
         self.values: list[float] = []

@@ -10,7 +10,7 @@ class Transform:
 
     def __init__(self, pos: Vector3, rot: Quaternion, name: str = "") -> None:
         if not isinstance(pos, Vector3):
-            raise TypeError(f"pos must be Vec3, got {type(pos).__name__}")
+            raise TypeError(f"pos must be Vector3, got {type(pos).__name__}")
         if not isinstance(rot, Quaternion):
             raise TypeError(f"rot must be Quaternion, got {type(rot).__name__}")
 
@@ -33,7 +33,7 @@ class Transform:
     @local_position.setter
     def local_position(self, value: Vector3) -> None:
         if not isinstance(value, Vector3):
-            raise TypeError(f"local_position must be Vec3, got {type(value).__name__}")
+            raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
         self.__local_position = value
         self.__position = self.__local_position if self.__parent is None else (self.__parent.rotation * self.__local_position) + self.__parent.position
         self.__update_children()
@@ -57,7 +57,7 @@ class Transform:
     @position.setter
     def position(self, value: Vector3) -> None:
         if not isinstance(value, Vector3):
-            raise TypeError(f"position must be Vec3, got {type(value).__name__}")
+            raise TypeError(f"position must be Vector3, got {type(value).__name__}")
         self.__position = value
         self.__local_position = self.__position if self.__parent is None else self.__parent.rotation.inverse() * (self.__position - self.__parent.position)
         self.__update_children()

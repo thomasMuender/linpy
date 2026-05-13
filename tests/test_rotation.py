@@ -62,13 +62,13 @@ class TestQuaternionConstruction:
         q = Quaternion([1, 2, 3, 4])
         assert_quat_equal(q, [1, 2, 3, 4])
 
-    def test_from_vec4(self):
-        # From a Vec4.
+    def test_from_Vector4(self):
+        # From a Vector4.
         q = Quaternion(Vector4(1, 2, 3, 4))
         assert_quat_equal(q, [1, 2, 3, 4])
 
-    def test_from_vec3_and_scalar(self):
-        # From a Vec3 (xyz) and a trailing scalar (w).
+    def test_from_Vector3_and_scalar(self):
+        # From a Vector3 (xyz) and a trailing scalar (w).
         q = Quaternion(Vector3(1, 2, 3), 4)
         assert_quat_equal(q, [1, 2, 3, 4])
 
@@ -96,7 +96,7 @@ class TestQuaternionConstruction:
         assert list(Quaternion(1, 2, 3, 4)) == [1.0, 2.0, 3.0, 4.0]
 
     def test_str(self):
-        # String representation delegates to the internal Vec4.
+        # String representation delegates to the internal Vector4.
         q = Quaternion(1.0, 2.0, 3.0, 4.0)
         assert str(q) == "[1.0, 2.0, 3.0, 4.0]"
 
@@ -334,8 +334,8 @@ class TestQuaternionNormalizeDot:
         q = Quaternion(1, 2, 3, 4)
         assert q.dot(q) == pytest.approx(30.0)
 
-    def test_dot_with_vec4(self):
-        # dot() should also accept a Vec4.
+    def test_dot_with_Vector4(self):
+        # dot() should also accept a Vector4.
         q = Quaternion(1, 0, 0, 0)
         v = Vector4(1, 0, 0, 0)
         assert q.dot(v) == pytest.approx(1.0)
@@ -558,7 +558,7 @@ class TestAngleAxisConversion:
 # ============================================================
 
 class TestVectorRotation:
-    """Verify Quaternion * Vec3 rotates the vector correctly."""
+    """Verify Quaternion * Vector3 rotates the vector correctly."""
 
     def test_identity_does_not_rotate(self):
         # Multiplying by the identity quaternion should leave any vector unchanged.

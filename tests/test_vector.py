@@ -1,5 +1,5 @@
 """
-Unit tests for vector math (Vec2, Vec3, Vec4).
+Unit tests for vector math (Vector2, Vector3, Vector4).
 
 Covers construction, arithmetic, swizzling, dot product, cross product,
 magnitude, normalization, trigonometric helpers, conversions, and edge cases.
@@ -27,20 +27,20 @@ def assert_vec_equal(v, expected, tol=1e-7):
 # ============================================================
 
 class TestVectorConstruction:
-    """Verify that Vec2/Vec3/Vec4 can be created from various input types
+    """Verify that Vector2/Vector3/Vector4 can be created from various input types
     and that invalid inputs are properly rejected."""
 
-    def test_vec2_from_two_scalars(self):
+    def test_Vector2_from_two_scalars(self):
         # Two individual floats set x and y directly.
         v = Vector2(1.0, 2.0)
         assert v.x == 1.0 and v.y == 2.0
 
-    def test_vec3_from_three_scalars(self):
+    def test_Vector3_from_three_scalars(self):
         # Three individual floats set x, y, z directly.
         v = Vector3(1.0, 2.0, 3.0)
         assert v.x == 1.0 and v.y == 2.0 and v.z == 3.0
 
-    def test_vec4_from_four_scalars(self):
+    def test_Vector4_from_four_scalars(self):
         # Four individual floats set x, y, z, w directly.
         v = Vector4(1.0, 2.0, 3.0, 4.0)
         assert v.x == 1.0 and v.y == 2.0 and v.z == 3.0 and v.w == 4.0
@@ -72,18 +72,18 @@ class TestVectorConstruction:
         copy = Vector3(orig)
         assert_vec_equal(copy, [1.0, 2.0, 3.0])
 
-    def test_mixed_vec3_and_scalar_to_vec4(self):
-        # Vec4 can be built from a Vec3 (xyz) plus a trailing scalar (w).
+    def test_mixed_Vector3_and_scalar_to_Vector4(self):
+        # Vector4 can be built from a Vector3 (xyz) plus a trailing scalar (w).
         v4 = Vector4(Vector3(1.0, 2.0, 3.0), 4.0)
         assert_vec_equal(v4, [1.0, 2.0, 3.0, 4.0])
 
-    def test_mixed_vec2_and_two_scalars_to_vec4(self):
-        # Vec4 from a Vec2 and two additional scalars.
+    def test_mixed_Vector2_and_two_scalars_to_Vector4(self):
+        # Vector4 from a Vector2 and two additional scalars.
         v4 = Vector4(Vector2(1.0, 2.0), 3.0, 4.0)
         assert_vec_equal(v4, [1.0, 2.0, 3.0, 4.0])
 
-    def test_two_vec2s_to_vec4(self):
-        # Vec4 from two Vec2s concatenated.
+    def test_two_Vector2s_to_Vector4(self):
+        # Vector4 from two Vector2s concatenated.
         v4 = Vector4(Vector2(1.0, 2.0), Vector2(3.0, 4.0))
         assert_vec_equal(v4, [1.0, 2.0, 3.0, 4.0])
 
@@ -126,7 +126,7 @@ class TestVectorArithmetic:
     """Verify element-wise and scalar arithmetic on vectors."""
 
     def test_add_same_type(self):
-        # Element-wise addition of two Vec3s.
+        # Element-wise addition of two Vector3s.
         a = Vector3(1.0, 2.0, 3.0)
         b = Vector3(4.0, 5.0, 6.0)
         assert_vec_equal(a + b, [5.0, 7.0, 9.0])
@@ -215,22 +215,22 @@ class TestVectorSwizzling:
         assert v.y == 20.0
         assert v.z == 30.0
 
-    def test_two_component_swizzle_returns_vec2(self):
-        # Two-character swizzle returns a Vec2.
+    def test_two_component_swizzle_returns_Vector2(self):
+        # Two-character swizzle returns a Vector2.
         v = Vector3(1, 2, 3)
         result = v.xy
         assert isinstance(result, Vector2)
         assert_vec_equal(result, [1, 2])
 
-    def test_three_component_swizzle_returns_vec3(self):
-        # Three-character swizzle returns a Vec3.
+    def test_three_component_swizzle_returns_Vector3(self):
+        # Three-character swizzle returns a Vector3.
         v = Vector4(1, 2, 3, 4)
         result = v.zyx
         assert isinstance(result, Vector3)
         assert_vec_equal(result, [3, 2, 1])
 
-    def test_four_component_swizzle_returns_vec4(self):
-        # Four-character swizzle on Vec4 returns a Vec4 with reordered components.
+    def test_four_component_swizzle_returns_Vector4(self):
+        # Four-character swizzle on Vector4 returns a Vector4 with reordered components.
         v = Vector4(1, 2, 3, 4)
         result = v.wzyx
         assert isinstance(result, Vector4)
@@ -266,7 +266,7 @@ class TestVectorSwizzling:
         assert_vec_equal(v, [0, 0, 3])
 
     def test_out_of_bounds_swizzle_raises(self):
-        # Accessing z on a Vec2 is out of range (Vec2 has only x,y).
+        # Accessing z on a Vector2 is out of range (Vector2 has only x,y).
         # Raises IndexError because name_to_idx returns index 2 which is
         # beyond the internal list length.
         v = Vector2(1, 2)
@@ -280,8 +280,8 @@ class TestVectorSwizzling:
         with pytest.raises(IndexError):
             v.xx = Vector2(1, 2)
 
-    def test_w_component_on_vec4(self):
-        # Vec4 supports the w component.
+    def test_w_component_on_Vector4(self):
+        # Vector4 supports the w component.
         v = Vector4(1, 2, 3, 4)
         assert v.w == 4.0
 
@@ -305,15 +305,15 @@ class TestVectorIndexing:
         v = Vector3(10, 20, 30)
         assert v[-1] == 30.0
 
-    def test_slice_to_vec3(self):
-        # Slicing a Vec4 to 3 elements returns a Vec3.
+    def test_slice_to_Vector3(self):
+        # Slicing a Vector4 to 3 elements returns a Vector3.
         v = Vector4(1, 2, 3, 4)
         result = v[:3]
         assert isinstance(result, Vector3)
         assert_vec_equal(result, [1, 2, 3])
 
-    def test_slice_to_vec2(self):
-        # Slicing to 2 elements returns a Vec2.
+    def test_slice_to_Vector2(self):
+        # Slicing to 2 elements returns a Vector2.
         v = Vector3(1, 2, 3)
         result = v[:2]
         assert isinstance(result, Vector2)
@@ -370,8 +370,8 @@ class TestDotProduct:
         a, b = Vector3(1, 2, 3), Vector3(4, 5, 6)
         assert a.dot(b) == pytest.approx(b.dot(a))
 
-    def test_dot_vec2(self):
-        # Dot product should also work on Vec2.
+    def test_dot_Vector2(self):
+        # Dot product should also work on Vector2.
         assert Vector2(3, 4).dot(Vector2(4, 3)) == pytest.approx(24.0)
 
 
@@ -484,11 +484,11 @@ class TestVectorTrigAndConversion:
 
 
 # ============================================================
-# Cross Product (Vec3 only)
+# Cross Product (Vector3 only)
 # ============================================================
 
 class TestCrossProduct:
-    """Verify the 3D cross product on Vec3."""
+    """Verify the 3D cross product on Vector3."""
 
     def test_x_cross_y_equals_z(self):
         # Standard right-hand rule: x × y = z.
@@ -543,23 +543,23 @@ class TestCrossProduct:
 class TestVectorConstants:
     """Verify convenience constant-vector properties (zero, one, axis units)."""
 
-    def test_vec3_zero(self):
+    def test_Vector3_zero(self):
         # zero returns the origin vector.
         assert_vec_equal(Vector3(1, 1, 1).zero, [0, 0, 0])
 
-    def test_vec3_one(self):
+    def test_Vector3_one(self):
         # one returns the all-ones vector.
         assert_vec_equal(Vector3(0, 0, 0).one, [1, 1, 1])
 
-    def test_vec3_axis_unit_vectors(self):
+    def test_Vector3_axis_unit_vectors(self):
         # x_one, y_one, z_one are the standard basis vectors.
         v = Vector3(0, 0, 0)
         assert_vec_equal(v.x_one, [1, 0, 0])
         assert_vec_equal(v.y_one, [0, 1, 0])
         assert_vec_equal(v.z_one, [0, 0, 1])
 
-    def test_vec4_w_one(self):
-        # Vec4 additionally provides w_one.
+    def test_Vector4_w_one(self):
+        # Vector4 additionally provides w_one.
         assert_vec_equal(Vector4(0, 0, 0, 0).w_one, [0, 0, 0, 1])
 
 

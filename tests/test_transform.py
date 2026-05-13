@@ -55,12 +55,12 @@ class TestTransformConstruction:
         assert_vec_equal(t.position, [5, 6, 7])
 
     def test_invalid_pos_type_raises(self):
-        # Position must be a Vec3, not a plain list.
+        # Position must be a Vector3, not a plain list.
         with pytest.raises(TypeError):
             Transform([1, 2, 3], Quaternion.fromEuler(0, 0, 0), "t")
 
     def test_invalid_rot_type_raises(self):
-        # Rotation must be a Quaternion, not a Vec4.
+        # Rotation must be a Quaternion, not a Vector4.
         with pytest.raises(TypeError):
             Transform(Vector3(0, 0, 0), Vector4(0, 0, 0, 1), "t")
 
@@ -379,28 +379,28 @@ class TestRotateAndTranslate:
 # ============================================================
 
 class TestTransformMultiplication:
-    """Verify Transform * Transform, Transform * Vec3, Transform * Vec4."""
+    """Verify Transform * Transform, Transform * Vector3, Transform * Vector4."""
 
-    def test_mul_vec3_applies_rotation_and_translation(self):
+    def test_mul_Vector3_applies_rotation_and_translation(self):
         # T * v should rotate then translate the vector.
         t = Transform(Vector3(10, 0, 0), Quaternion.fromRotationZ(90), "t")
         result = t * Vector3(1, 0, 0)
         # rot(90Z) * (1,0,0) = (0,1,0), then + (10,0,0) = (10,1,0)
         assert_vec_equal(result, [10, 1, 0])
 
-    def test_mul_vec3_identity(self):
+    def test_mul_Vector3_identity(self):
         # Identity transform should not modify the vector.
         t = make_identity_transform()
         assert_vec_equal(t * Vector3(1, 2, 3), [1, 2, 3])
 
-    def test_mul_vec4_with_w1(self):
-        # Vec4 with w=1 should be treated as a point (translation applied).
+    def test_mul_Vector4_with_w1(self):
+        # Vector4 with w=1 should be treated as a point (translation applied).
         t = make_transform("t", 10, 0, 0)
         result = t * Vector4(1, 0, 0, 1)
         assert_vec_equal(result, [11, 0, 0, 1])
 
-    def test_mul_vec4_with_w0(self):
-        # Vec4 with w=0 should be treated as a direction (no translation).
+    def test_mul_Vector4_with_w0(self):
+        # Vector4 with w=0 should be treated as a direction (no translation).
         t = make_transform("t", 10, 0, 0)
         result = t * Vector4(1, 0, 0, 0)
         assert_vec_equal(result, [1, 0, 0, 0])
@@ -584,7 +584,7 @@ class TestTransformEdgeCases:
         assert_vec_equal(t * Vector3(1, 0, 0), [5, 1, 0])
 
     def test_position_setter_invalid_type_raises(self):
-        # Position setter should reject non-Vec3.
+        # Position setter should reject non-Vector3.
         t = make_identity_transform()
         with pytest.raises(TypeError):
             t.position = [1, 2, 3]
@@ -596,7 +596,7 @@ class TestTransformEdgeCases:
             t.rotation = Vector3(0, 0, 0)
 
     def test_local_position_setter_invalid_type_raises(self):
-        # local_position setter should reject non-Vec3.
+        # local_position setter should reject non-Vector3.
         t = make_identity_transform()
         with pytest.raises(TypeError):
             t.local_position = (1, 2, 3)

@@ -17,22 +17,22 @@ pip install -e .
 
 ## Vectors
 
-Three concrete vector types are provided: `Vec2`, `Vec3`, and `Vec4`. All share the same `Vector` base class.
+Three concrete vector types are provided: `Vector2`, `Vector3`, and `Vector4`. All share the same `Vector` base class.
 
 ```python
-from linpy import Vec2, Vec3, Vec4
+from linpy import Vector2, Vector3, Vector4
 
-a = Vec3(1, 2, 3)
-b = Vec3(4, 5, 6)
+a = Vector3(1, 2, 3)
+b = Vector3(4, 5, 6)
 ```
 
 ### Construction
 
 ```python
-Vec3(1, 2, 3)            # from individual components
-Vec3(1.0)                # broadcast — all components set to 1.0
-Vec3([1, 2, 3])          # from list or tuple
-Vec3(Vec2(1, 2), 3)      # from smaller vector + extra components
+Vector3(1, 2, 3)            # from individual components
+Vector3(1.0)                # broadcast — all components set to 1.0
+Vector3([1, 2, 3])          # from list or tuple
+Vector3(Vector2(1, 2), 3)      # from smaller vector + extra components
 ```
 
 ### Arithmetic
@@ -51,16 +51,16 @@ a.inverse()    # alias for negation (-a)
 
 ### Swizzling
 
-Components can be read and written using any permutation of `x y z w` (or `r g b a` / `u v`).
+Components can be read and written using any permutation of `x y z w`.
 
 ```python
-v = Vec3(1, 2, 3)
+v = Vector3(1, 2, 3)
 v.x            # 1.0  (single component → float)
-v.xy           # Vec2(1.0, 2.0)
-v.zyx          # Vec3(3.0, 2.0, 1.0)
-v.xyzx         # Vec4(1.0, 2.0, 3.0, 1.0)
+v.xy           # Vector2(1.0, 2.0)
+v.zyx          # Vector3(3.0, 2.0, 1.0)
+v.xyzx         # Vector4(1.0, 2.0, 3.0, 1.0)
 
-v.xy = Vec2(10, 20)   # multi-component write
+v.xy = Vector2(10, 20)   # multi-component write
 v.z = 99              # single-component write
 ```
 
@@ -68,7 +68,7 @@ Indexing and slicing also work:
 
 ```python
 v[0]      # 1.0
-v[1:3]    # Vec2(2.0, 3.0)
+v[1:3]    # Vector2(2.0, 3.0)
 v[0] = 5  # in-place element assignment
 ```
 
@@ -81,10 +81,10 @@ a.normalize()     # normalise in-place
 a.normalized()    # returns a new normalised vector
 ```
 
-`Vec3` additionally supports the cross product:
+`Vector3` additionally supports the cross product:
 
 ```python
-Vec3(1, 0, 0).cross(Vec3(0, 1, 0))  # Vec3(0.0, 0.0, 1.0)
+Vector3(1, 0, 0).cross(Vector3(0, 1, 0))  # Vector3(0.0, 0.0, 1.0)
 ```
 
 ### Trigonometric & Conversion Helpers
@@ -101,11 +101,11 @@ v.toNumpy()   # returns a numpy array
 ### Constants (properties on each type)
 
 ```python
-Vec3.zero    # Vec3(0, 0, 0)
-Vec3.one     # Vec3(1, 1, 1)
-Vec3.x_one   # Vec3(1, 0, 0)
-Vec3.y_one   # Vec3(0, 1, 0)
-Vec3.z_one   # Vec3(0, 0, 1)
+Vector3.zero    # Vector3(0, 0, 0)
+Vector3.one     # Vector3(1, 1, 1)
+Vector3.x_one   # Vector3(1, 0, 0)
+Vector3.y_one   # Vector3(0, 1, 0)
+Vector3.z_one   # Vector3(0, 0, 1)
 ```
 
 ---
@@ -115,14 +115,14 @@ Vec3.z_one   # Vec3(0, 0, 1)
 `Quaternion` represents a rotation in 3D space stored as `(x, y, z, w)`.
 
 ```python
-from linpy import Quaternion, Vec3
+from linpy import Quaternion, Vector3
 ```
 
 ### Construction
 
 ```python
 Quaternion(x, y, z, w)         # from raw components
-Quaternion(Vec4(x, y, z, w))   # from Vec4
+Quaternion(Vector4(x, y, z, w))   # from Vector4
 ```
 
 ### Factory Methods
@@ -131,7 +131,7 @@ Quaternion(Vec4(x, y, z, w))   # from Vec4
 Quaternion.fromRotationX(90)           # 90° rotation about X axis (degrees)
 Quaternion.fromRotationY(45)           # rotation about Y axis
 Quaternion.fromRotationZ(30)           # rotation about Z axis
-Quaternion.fromAngleAxis(axis, deg)    # axis (Vec3) + angle in degrees
+Quaternion.fromAngleAxis(axis, deg)    # axis (Vector3) + angle in degrees
 Quaternion.fromEuler(rx, ry, rz)       # Euler angles in degrees, default order ZXY
 Quaternion.fromEuler(rx, ry, rz, "XYZ")  # explicit rotation order
 Quaternion.fromMatrix3x3(matrix)       # from a 3×3 numpy rotation matrix
@@ -143,7 +143,7 @@ Supported Euler orders: `XYZ`, `XZY`, `YXZ`, `YZX`, `ZXY`, `ZYX`.
 
 ```python
 q = Quaternion.fromRotationZ(90)
-q * Vec3(1, 0, 0)   # Vec3(0.0, 1.0, 0.0)
+q * Vector3(1, 0, 0)   # Vector3(0.0, 1.0, 0.0)
 ```
 
 ### Composition & Algebra
@@ -153,7 +153,7 @@ q1 * q2          # compose rotations
 q.inverse()      # inverse rotation
 q.normalize()    # normalise in-place
 q.normalized()   # returns a new normalised quaternion
-q.dot(other)     # dot product with another Quaternion or Vec4
+q.dot(other)     # dot product with another Quaternion or Vector4
 ```
 
 ### Incremental Rotation
@@ -167,33 +167,33 @@ q = q.rotateZ(60)
 ### Conversion
 
 ```python
-q.toEuler()              # Vec3 of Euler angles (degrees), default order ZXY
+q.toEuler()              # Vector3 of Euler angles (degrees), default order ZXY
 q.toEuler("XYZ")         # explicit order
 q.toMatrix3x3()          # 3×3 numpy rotation matrix
-q.toAngleAxis()          # (axis: Vec3, angle_degrees: float)
+q.toAngleAxis()          # (axis: Vector3, angle_degrees: float)
 ```
 
 ---
 
 ## Transforms
 
-`Transform` combines a position (`Vec3`) and rotation (`Quaternion`) and supports parent–child hierarchies that automatically propagate world-space values.
+`Transform` combines a position (`Vector3`) and rotation (`Quaternion`) and supports parent–child hierarchies that automatically propagate world-space values.
 
 ```python
-from linpy import Transform, Vec3, Quaternion
+from linpy import Transform, Vector3, Quaternion
 
-t = Transform(Vec3(1, 2, 3), Quaternion.fromEuler(0, 0, 0), "myNode")
+t = Transform(Vector3(1, 2, 3), Quaternion.fromEuler(0, 0, 0), "myNode")
 # name is optional:
-t = Transform(Vec3(1, 2, 3), Quaternion.fromEuler(0, 0, 0))
+t = Transform(Vector3(1, 2, 3), Quaternion.fromEuler(0, 0, 0))
 ```
 
 ### Properties
 
 | Property | Description |
 |---|---|
-| `position` | World-space position (`Vec3`) |
+| `position` | World-space position (`Vector3`) |
 | `rotation` | World-space rotation (`Quaternion`) |
-| `local_position` | Position relative to parent (`Vec3`) |
+| `local_position` | Position relative to parent (`Vector3`) |
 | `local_rotation` | Rotation relative to parent (`Quaternion`) |
 | `parent` | Parent `Transform` or `None` |
 | `name` | Optional string label |
@@ -203,10 +203,10 @@ Setting any of these properties automatically recomputes the dependent values an
 ### Parent–Child Hierarchy
 
 ```python
-parent = Transform(Vec3(10, 0, 0), Quaternion.fromEuler(0, 0, 0), "parent")
-child  = Transform(Vec3( 5, 0, 0), Quaternion.fromEuler(0, 0, 0), "child")
+parent = Transform(Vector3(10, 0, 0), Quaternion.fromEuler(0, 0, 0), "parent")
+child  = Transform(Vector3( 5, 0, 0), Quaternion.fromEuler(0, 0, 0), "child")
 
-child.parent = parent          # child.position → Vec3(15, 0, 0)
+child.parent = parent          # child.position → Vector3(15, 0, 0)
 parent.add_child(other_child)  # alternative API
 
 child.parent = None            # unparent; world reverts to local values
@@ -225,23 +225,23 @@ for c in parent:
 ### Translation & Rotation
 
 ```python
-t.translate(Vec3(1, 0, 0))            # move by offset in local frame
+t.translate(Vector3(1, 0, 0))            # move by offset in local frame
 t.rotate(Quaternion.fromRotationZ(90)) # accumulate additional rotation
 ```
 
 ### Coordinate Conversion
 
 ```python
-t.local_to_world(Vec3(1, 0, 0))  # transform point from local → world space
-t.world_to_local(Vec3(1, 0, 0))  # transform point from world → local space
+t.local_to_world(Vector3(1, 0, 0))  # transform point from local → world space
+t.world_to_local(Vector3(1, 0, 0))  # transform point from world → local space
 ```
 
 ### Transform Multiplication
 
 ```python
-result = t * Vec3(1, 0, 0)   # rotate then translate a point
-result = t * Vec4(1, 0, 0, 1)  # w=1 → point (translation applied)
-result = t * Vec4(1, 0, 0, 0)  # w=0 → direction (no translation)
+result = t * Vector3(1, 0, 0)   # rotate then translate a point
+result = t * Vector4(1, 0, 0, 1)  # w=1 → point (translation applied)
+result = t * Vector4(1, 0, 0, 0)  # w=0 → direction (no translation)
 composed = t1 * t2            # compose two transforms
 ```
 
@@ -257,12 +257,12 @@ inv * (t * point)   # ≈ point
 ## Full Example
 
 ```python
-from linpy import Vec3, Quaternion, Transform
+from linpy import Vector3, Quaternion, Transform
 
 # Build a small scene graph
-root  = Transform(Vec3(0, 0, 0), Quaternion.fromEuler(0, 90, 0), "root")
-arm   = Transform(Vec3(2, 0, 0), Quaternion.fromEuler(0,  0, 0), "arm")
-tip   = Transform(Vec3(1, 0, 0), Quaternion.fromEuler(0,  0, 0), "tip")
+root  = Transform(Vector3(0, 0, 0), Quaternion.fromEuler(0, 90, 0), "root")
+arm   = Transform(Vector3(2, 0, 0), Quaternion.fromEuler(0,  0, 0), "arm")
+tip   = Transform(Vector3(1, 0, 0), Quaternion.fromEuler(0,  0, 0), "tip")
 
 arm.parent = root
 tip.parent = arm
@@ -275,5 +275,5 @@ root.rotate(Quaternion.fromRotationY(45))
 print(tip.position)     # updated world position
 
 # Transform a world-space point into the tip's local frame
-local_pt = tip.world_to_local(Vec3(5, 0, 0))
+local_pt = tip.world_to_local(Vector3(5, 0, 0))
 ```
