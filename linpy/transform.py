@@ -161,7 +161,9 @@ class Transform:
 
     def __update_children(self) -> None:
         for child in self.__children:
-            child.parent = self
+            child.__position = (self.__rotation * child.__local_position) + self.__position
+            child.__rotation = self.__rotation * child.__local_rotation
+            child.__update_children()
 
     def world_to_local(self, world_pos: Vector3) -> Vector3:
         return self.rotation.inverse() * (world_pos - self.position)
