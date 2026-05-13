@@ -35,8 +35,7 @@ class Transform:
         if not isinstance(value, Vector3):
             raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
         self.__local_position = value
-        self.__position = self.__local_position if self.__parent is None else (self.__parent.rotation * self.__local_position) + self.__parent.position
-        self.__update_children()
+        self.__propagate()
 
     @property
     def local_rotation(self) -> Quaternion:
@@ -47,8 +46,7 @@ class Transform:
         if not isinstance(value, Quaternion):
             raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
         self.__local_rotation = value
-        self.__rotation = self.__local_rotation if self.__parent is None else self.__parent.rotation * self.__local_rotation
-        self.__update_children()
+        self.__propagate()
 
     @property
     def position(self) -> Vector3:
@@ -58,9 +56,8 @@ class Transform:
     def position(self, value: Vector3) -> None:
         if not isinstance(value, Vector3):
             raise TypeError(f"position must be Vector3, got {type(value).__name__}")
-        self.__position = value
-        self.__local_position = self.__position if self.__parent is None else self.__parent.rotation.inverse() * (self.__position - self.__parent.position)
-        self.__update_children()
+        self.__local_position = value if self.__parent is None else self.__parent.rotation.inverse() * (value - self.__parent.position)
+        self.__propagate()
 
     @property
     def rotation(self) -> Quaternion:
@@ -70,9 +67,8 @@ class Transform:
     def rotation(self, value: Quaternion) -> None:
         if not isinstance(value, Quaternion):
             raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
-        self.__rotation = value
-        self.__local_rotation = self.__rotation if self.__parent is None else self.__parent.rotation.inverse() * self.__rotation
-        self.__update_children()
+        self.__local_rotation = value if self.__parent is None else self.__parent.rotation.inverse() * value
+        self.__propagate()
 
     @property
     def parent(self) -> Transform | None:
@@ -85,28 +81,33 @@ class Transform:
         if isinstance(value, Transform) and value is not self.__parent and self.__is_descendant(value):
             raise ValueError("Cannot set a descendant as parent")
 
+        # Detach from the current parent
         if self.__parent is not None:
             self.__parent.__remove_child(self)
 
+        # Attach to the new parent, or promote to world root
         if isinstance(value, Transform):
             self.__parent = value
             self.__parent.__add_child(self)
-            self.__position = (self.__parent.rotation * self.__local_position) + self.__parent.position
-            self.__rotation = self.__parent.rotation * self.__local_rotation
         else:
             self.__parent = None
-            self.__position = self.__local_position
-            self.__rotation = self.__local_rotation
 
-        self.__update_children()
+        # Recompute world transform and propagate to children
+        self.__propagate()
     
     def __repr__(self) -> str:
         return f"Transform({self.name!r}, {self.position!r}, {self.rotation!r})"
 
     def __str__(self) -> str:
-        return self.name + ": [Pos: " + str(self.position) + ", Rot: " + str(self.rotation.toEuler()) + "]"
+        return self.name + ": [Pos: " + str(self.position) + ", Rot: " + str(self.rotation.to_euler()) + "]"
 
     def __mul__(self, other: Transform | Vector3 | Vector4) -> Transform | Vector3 | Vector4:
+        """Compose this transform with another object.
+
+        Transform * Transform -> composed transform (other expressed in this space)
+        Transform * Vector3  -> point transformed into world space
+        Transform * Vector4  -> homogeneous-coordinate transform (w-weighted position)
+        """
         if isinstance(other, Transform):
             return Transform((self.rotation * other.position) + self.position, self.rotation * other.rotation, self.name + "*" + other.name)
         elif isinstance(other, Vector3):
@@ -132,7 +133,7 @@ class Transform:
 
     def inverse(self) -> Transform:
         inv_rot = self.rotation.inverse()
-        inv_pos = inv_rot * self.position.inverse()
+        inv_pos = inv_rot * (-self.position)
         return Transform(inv_pos, inv_rot, self.name + "_inv")
     
     def rotate(self, rotation: Quaternion) -> None:
@@ -159,11 +160,17 @@ class Transform:
                 return True
         return False
 
-    def __update_children(self) -> None:
+    def __propagate(self) -> None:
+        """Recalculate this transform's world position/rotation from its locals,
+        then recursively propagate to all children."""
+        if self.__parent is None:
+            self.__position = self.__local_position
+            self.__rotation = self.__local_rotation
+        else:
+            self.__position = (self.__parent.rotation * self.__local_position) + self.__parent.position
+            self.__rotation = self.__parent.rotation * self.__local_rotation
         for child in self.__children:
-            child.__position = (self.__rotation * child.__local_position) + self.__position
-            child.__rotation = self.__rotation * child.__local_rotation
-            child.__update_children()
+            child.__propagate()
 
     def world_to_local(self, world_pos: Vector3) -> Vector3:
         return self.rotation.inverse() * (world_pos - self.position)

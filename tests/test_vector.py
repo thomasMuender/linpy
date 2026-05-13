@@ -474,11 +474,11 @@ class TestVectorTrigAndConversion:
 
     def test_toList(self):
         # toList() must return a plain Python list.
-        assert Vector3(1, 2, 3).toList() == [1.0, 2.0, 3.0]
+        assert Vector3(1, 2, 3).to_list() == [1.0, 2.0, 3.0]
 
     def test_toNumpy(self):
         # toNumpy() must return a numpy ndarray with matching values.
-        arr = Vector3(1, 2, 3).toNumpy()
+        arr = Vector3(1, 2, 3).to_numpy()
         assert isinstance(arr, np.ndarray)
         np.testing.assert_array_almost_equal(arr, [1.0, 2.0, 3.0])
 

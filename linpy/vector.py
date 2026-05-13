@@ -200,10 +200,10 @@ class Vector:
     def radians(self) -> Vector:
         return type(self)([math.radians(v) for v in self.values])
     
-    def toList(self) -> list[float]:
+    def to_list(self) -> list[float]:
         return self.values[:]
 
-    def toNumpy(self) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray:
         return np.array(self.values)
 
 

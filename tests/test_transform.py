@@ -26,13 +26,13 @@ def assert_vec_equal(v, expected, tol=1e-6):
 
 def make_identity_transform(name: str = "t") -> Transform:
     """Create a transform at the origin with identity rotation."""
-    return Transform(Vector3(0, 0, 0), Quaternion.fromEuler(0, 0, 0), name)
+    return Transform(Vector3(0, 0, 0), Quaternion.from_euler(0, 0, 0), name)
 
 
 def make_transform(name: str, x: float, y: float, z: float,
                    rx: float = 0, ry: float = 0, rz: float = 0) -> Transform:
     """Shortcut to create a positioned and rotated transform."""
-    return Transform(Vector3(x, y, z), Quaternion.fromEuler(rx, ry, rz), name)
+    return Transform(Vector3(x, y, z), Quaternion.from_euler(rx, ry, rz), name)
 
 
 # ============================================================
@@ -44,7 +44,7 @@ class TestTransformConstruction:
 
     def test_basic_construction(self):
         # A transform stores name, position and rotation.
-        t = Transform(Vector3(1, 2, 3), Quaternion.fromEuler(0, 0, 0), "root")
+        t = Transform(Vector3(1, 2, 3), Quaternion.from_euler(0, 0, 0), "root")
         assert t.name == "root"
         assert_vec_equal(t.position, [1, 2, 3])
 
@@ -57,7 +57,7 @@ class TestTransformConstruction:
     def test_invalid_pos_type_raises(self):
         # Position must be a Vector3, not a plain list.
         with pytest.raises(TypeError):
-            Transform([1, 2, 3], Quaternion.fromEuler(0, 0, 0), "t")
+            Transform([1, 2, 3], Quaternion.from_euler(0, 0, 0), "t")
 
     def test_invalid_rot_type_raises(self):
         # Rotation must be a Quaternion, not a Vector4.
@@ -88,7 +88,7 @@ class TestSingleLevelParenting:
         # When a child is parented, its world position = parent.pos + local.pos
         # (with identity rotation on the parent).
         parent = make_transform("parent", 10, 0, 0)
-        child = Transform(Vector3(5, 0, 0), Quaternion.fromEuler(0, 0, 0), "child")
+        child = Transform(Vector3(5, 0, 0), Quaternion.from_euler(0, 0, 0), "child")
         child.parent = parent
         # World position should be parent (10,0,0) + local (5,0,0) = (15,0,0)
         assert_vec_equal(child.position, [15, 0, 0])
@@ -103,15 +103,15 @@ class TestSingleLevelParenting:
     def test_parent_rotation_affects_child_world_position(self):
         # A parent rotated 90° about Z should swing the child's local offset.
         # Local (1,0,0) becomes world (0,1,0) after 90° Z rotation.
-        parent = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "parent")
-        child = Transform(Vector3(1, 0, 0), Quaternion.fromEuler(0, 0, 0), "child")
+        parent = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "parent")
+        child = Transform(Vector3(1, 0, 0), Quaternion.from_euler(0, 0, 0), "child")
         child.parent = parent
         assert_vec_equal(child.position, [0, 1, 0])
 
     def test_parent_rotation_affects_child_world_rotation(self):
         # Child's world rotation = parent.rotation * child.local_rotation.
-        parent = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "parent")
-        child = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "child")
+        parent = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "parent")
+        child = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "child")
         child.parent = parent
         # Net rotation = 90+90 = 180° about Z.
         v = child.rotation * Vector3(1, 0, 0)
@@ -195,7 +195,7 @@ class TestMultiLevelTree:
         grandchild = make_transform("gc", 1, 0, 0)
         child.parent = root
         grandchild.parent = child
-        root.local_rotation = Quaternion.fromRotationZ(90)
+        root.local_rotation = Quaternion.from_rotation_z(90)
         # child world pos: rot(90Z) * (1,0,0) = (0,1,0)
         assert_vec_equal(child.position, [0, 1, 0])
         # grandchild world pos: root.rot * child.local + child.world
@@ -244,7 +244,7 @@ class TestWorldToLocalBackCompute:
 
     def test_set_world_position_with_rotated_parent(self):
         # With a rotated parent, the local position is in the parent's local frame.
-        parent = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "parent")
+        parent = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "parent")
         child = make_transform("child", 0, 0, 0)
         child.parent = parent
         # Set world position to (0, 5, 0)
@@ -255,11 +255,11 @@ class TestWorldToLocalBackCompute:
 
     def test_set_world_rotation_updates_local(self):
         # Setting world rotation on a child should update its local rotation.
-        parent = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "parent")
+        parent = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "parent")
         child = make_transform("child", 0, 0, 0)
         child.parent = parent
         # Set child world rotation to 90° Z (same as parent)
-        child.rotation = Quaternion.fromRotationZ(90)
+        child.rotation = Quaternion.from_rotation_z(90)
         # local_rotation = invParent * worldRot = inv(90Z) * 90Z = identity
         v = child.local_rotation * Vector3(1, 0, 0)
         assert_vec_equal(v, [1, 0, 0])
@@ -274,10 +274,10 @@ class TestWorldToLocalBackCompute:
 
     def test_set_local_rotation_updates_world(self):
         # Setting local rotation should recompute world rotation.
-        parent = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "parent")
+        parent = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "parent")
         child = make_transform("child", 0, 0, 0)
         child.parent = parent
-        child.local_rotation = Quaternion.fromRotationZ(90)
+        child.local_rotation = Quaternion.from_rotation_z(90)
         # world = parent(90Z) * local(90Z) = 180° Z
         v = child.rotation * Vector3(1, 0, 0)
         assert_vec_equal(v, [-1, 0, 0])
@@ -312,17 +312,17 @@ class TestCoordinateConversion:
 
     def test_world_to_local_with_rotation(self):
         # 90° Z rotation: world (0,1,0) → local (1,0,0).
-        t = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t")
+        t = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t")
         assert_vec_equal(t.world_to_local(Vector3(0, 1, 0)), [1, 0, 0])
 
     def test_local_to_world_with_rotation(self):
         # 90° Z rotation: local (1,0,0) → world (0,1,0).
-        t = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t")
+        t = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t")
         assert_vec_equal(t.local_to_world(Vector3(1, 0, 0)), [0, 1, 0])
 
     def test_roundtrip_world_local_world(self):
         # world → local → world should return the original point.
-        t = Transform(Vector3(3, 4, 5), Quaternion.fromEuler(30, 45, 60), "t")
+        t = Transform(Vector3(3, 4, 5), Quaternion.from_euler(30, 45, 60), "t")
         world_pt = Vector3(10, 20, 30)
         local_pt = t.world_to_local(world_pt)
         restored = t.local_to_world(local_pt)
@@ -330,7 +330,7 @@ class TestCoordinateConversion:
 
     def test_roundtrip_local_world_local(self):
         # local → world → local should return the original point.
-        t = Transform(Vector3(3, 4, 5), Quaternion.fromEuler(30, 45, 60), "t")
+        t = Transform(Vector3(3, 4, 5), Quaternion.from_euler(30, 45, 60), "t")
         local_pt = Vector3(1, 2, 3)
         world_pt = t.local_to_world(local_pt)
         restored = t.world_to_local(world_pt)
@@ -353,15 +353,15 @@ class TestRotateAndTranslate:
     def test_translate_adds_in_local_frame(self):
         # translate() applies the translation in the transform's local frame.
         # 90° Z rotation: local X axis points in world Y direction.
-        t = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t")
+        t = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t")
         t.translate(Vector3(1, 0, 0))
         # (rot * (1,0,0)) + (0,0,0) = (0,1,0)
         assert_vec_equal(t.position, [0, 1, 0])
 
     def test_rotate_accumulates(self):
         # Two successive 90° rotations about Z should give 180°.
-        t = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t")
-        t.rotate(Quaternion.fromRotationZ(90))
+        t = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t")
+        t.rotate(Quaternion.from_rotation_z(90))
         v = t.rotation * Vector3(1, 0, 0)
         assert_vec_equal(v, [-1, 0, 0])
 
@@ -383,7 +383,7 @@ class TestTransformMultiplication:
 
     def test_mul_Vector3_applies_rotation_and_translation(self):
         # T * v should rotate then translate the vector.
-        t = Transform(Vector3(10, 0, 0), Quaternion.fromRotationZ(90), "t")
+        t = Transform(Vector3(10, 0, 0), Quaternion.from_rotation_z(90), "t")
         result = t * Vector3(1, 0, 0)
         # rot(90Z) * (1,0,0) = (0,1,0), then + (10,0,0) = (10,1,0)
         assert_vec_equal(result, [10, 1, 0])
@@ -415,7 +415,7 @@ class TestTransformMultiplication:
 
     def test_mul_transform_with_rotation(self):
         # Composing a rotated transform with a translated one.
-        t1 = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t1")
+        t1 = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t1")
         t2 = make_transform("t2", 1, 0, 0)
         composed = t1 * t2
         # rot(90Z) * (1,0,0) + (0,0,0) = (0,1,0)
@@ -450,7 +450,7 @@ class TestTransformInverse:
 
     def test_inverse_rotation_only(self):
         # Inverse of a pure rotation should undo it.
-        t = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "t")
+        t = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "t")
         inv = t.inverse()
         v = Vector3(1, 0, 0)
         rotated = t * v
@@ -459,7 +459,7 @@ class TestTransformInverse:
 
     def test_inverse_combined(self):
         # Inverse of a combined rotation+translation should undo both.
-        t = Transform(Vector3(3, 4, 5), Quaternion.fromEuler(30, 45, 60), "t")
+        t = Transform(Vector3(3, 4, 5), Quaternion.from_euler(30, 45, 60), "t")
         inv = t.inverse()
         v = Vector3(10, 20, 30)
         assert_vec_equal(inv * (t * v), [10, 20, 30])
@@ -471,7 +471,7 @@ class TestTransformInverse:
 
     def test_double_inverse_identity(self):
         # Applying inverse twice should be (approximately) identity.
-        t = Transform(Vector3(3, 4, 5), Quaternion.fromEuler(30, 45, 60), "t")
+        t = Transform(Vector3(3, 4, 5), Quaternion.from_euler(30, 45, 60), "t")
         double_inv = t.inverse().inverse()
         v = Vector3(1, 2, 3)
         assert_vec_equal(double_inv * v, list(t * v))
@@ -529,7 +529,7 @@ class TestTransformEdgeCases:
 
     def test_rotated_deep_hierarchy(self):
         # Root rotated 90° Z, then 3 children each offset by (1,0,0) local.
-        root = Transform(Vector3(0, 0, 0), Quaternion.fromRotationZ(90), "root")
+        root = Transform(Vector3(0, 0, 0), Quaternion.from_rotation_z(90), "root")
         c1 = make_transform("c1", 1, 0, 0)
         c2 = make_transform("c2", 1, 0, 0)
         c3 = make_transform("c3", 1, 0, 0)
@@ -568,7 +568,7 @@ class TestTransformEdgeCases:
         # If a child has local rotation, translating the parent should
         # correctly update the child's world position.
         parent = make_identity_transform("parent")
-        child = Transform(Vector3(1, 0, 0), Quaternion.fromRotationZ(90), "child")
+        child = Transform(Vector3(1, 0, 0), Quaternion.from_rotation_z(90), "child")
         child.parent = parent
         assert_vec_equal(child.position, [1, 0, 0])
         parent.translate(Vector3(5, 0, 0))
@@ -578,7 +578,7 @@ class TestTransformEdgeCases:
         # Sequential translate + rotate should work correctly.
         t = make_identity_transform()
         t.translate(Vector3(5, 0, 0))
-        t.rotate(Quaternion.fromRotationZ(90))
+        t.rotate(Quaternion.from_rotation_z(90))
         # Now at (5,0,0) rotated 90° Z.
         # Transforming (1,0,0): rot(90Z)*(1,0,0) + (5,0,0) = (0,1,0) + (5,0,0) = (5,1,0)
         assert_vec_equal(t * Vector3(1, 0, 0), [5, 1, 0])

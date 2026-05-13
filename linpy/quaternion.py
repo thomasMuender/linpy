@@ -108,33 +108,31 @@ class Quaternion:
         return Quaternion(0., 0., 0., 1.)
 
     @staticmethod
-    def fromRotationX(deg: float) -> Quaternion:
+    def from_rotation_x(deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return Quaternion(s, 0., 0., c)
 
     @staticmethod
-    def fromRotationY(deg: float) -> Quaternion:
+    def from_rotation_y(deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return Quaternion(0., s, 0., c)
 
     @staticmethod
-    def fromRotationZ(deg: float) -> Quaternion:
+    def from_rotation_z(deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return Quaternion(0., 0., s, c)
 
     @staticmethod
-    def fromAngleAxis(axis: Vector3, deg: float) -> Quaternion:
+    def from_angle_axis(axis: Vector3, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return Quaternion(axis.normalized() * s, c)
 
     @staticmethod
-    def fromMatrix3x3(matrix: np.ndarray) -> Quaternion:
+    def from_matrix3x3(matrix: np.ndarray) -> Quaternion:
         """
         Creates a quaternion from a 3x3 rotation matrix
         Uses the trace method for numerical stability
         """
-        if not isinstance(matrix, np.ndarray) or matrix.shape != (3, 3):
-            raise ValueError("Input must be a 3x3 numpy array")
         if not isinstance(matrix, np.ndarray) or matrix.shape != (3, 3):
             raise ValueError("Input must be a 3x3 numpy array")
 
@@ -172,7 +170,7 @@ class Quaternion:
         return Quaternion(x, y, z, w)
 
     @staticmethod
-    def fromEuler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion:
+    def from_euler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion:
         key = order.lower()
         if key not in _EULER_SIGN_MAP:
             raise ValueError(f"Invalid Euler order: '{order}'. Must be a permutation of XYZ.")
@@ -202,19 +200,19 @@ class Quaternion:
     def inverse(self) -> Quaternion:
         return Quaternion(rcp(self.values.dot(self.values)) * self.values * Vector4(-1., -1., -1., 1.))
 
-    def rotateX(self, deg: float) -> Quaternion:
+    def rotate_x(self, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return self * Quaternion(s, 0., 0., c)
 
-    def rotateY(self, deg: float) -> Quaternion:
+    def rotate_y(self, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return self * Quaternion(0., s, 0., c)
 
-    def rotateZ(self, deg: float) -> Quaternion:
+    def rotate_z(self, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return self * Quaternion(0., 0., s, c)
 
-    def toMatrix3x3(self) -> np.ndarray:
+    def to_matrix3x3(self) -> np.ndarray:
         q = self.normalized()
         x, y, z, w = q.values
 
@@ -228,7 +226,7 @@ class Quaternion:
             [2 * (xz - wy),       2 * (yz + wx),      1 - 2 * (xx + yy)],
         ])
 
-    def toAngleAxis(self) -> tuple[Vector3, float]:
+    def to_angle_axis(self) -> tuple[Vector3, float]:
         q = self.normalized()
         w = max(-1.0, min(1.0, q.w))
         t = math.sqrt(1.0 - w * w)
@@ -238,7 +236,7 @@ class Quaternion:
         axis = Vector3(q.x / t, q.y / t, q.z / t)
         return axis, deg
 
-    def toEuler(self, order: str = "ZXY") -> Vector3:
+    def to_euler(self, order: str = "ZXY") -> Vector3:
         q = self.normalized()
         key = order.lower()
         if key not in _EULER_SIGN_MAP:
