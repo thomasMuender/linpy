@@ -545,22 +545,22 @@ class TestVectorConstants:
 
     def test_Vector3_zero(self):
         # zero returns the origin vector.
-        assert_vec_equal(Vector3(1, 1, 1).zero, [0, 0, 0])
+        assert_vec_equal(Vector3(1, 1, 1).zero(), [0, 0, 0])
 
     def test_Vector3_one(self):
         # one returns the all-ones vector.
-        assert_vec_equal(Vector3(0, 0, 0).one, [1, 1, 1])
+        assert_vec_equal(Vector3(0, 0, 0).one(), [1, 1, 1])
 
     def test_Vector3_axis_unit_vectors(self):
         # x_one, y_one, z_one are the standard basis vectors.
         v = Vector3(0, 0, 0)
-        assert_vec_equal(v.x_one, [1, 0, 0])
-        assert_vec_equal(v.y_one, [0, 1, 0])
-        assert_vec_equal(v.z_one, [0, 0, 1])
+        assert_vec_equal(v.x_one(), [1, 0, 0])
+        assert_vec_equal(v.y_one(), [0, 1, 0])
+        assert_vec_equal(v.z_one(), [0, 0, 1])
 
     def test_Vector4_w_one(self):
         # Vector4 additionally provides w_one.
-        assert_vec_equal(Vector4(0, 0, 0, 0).w_one, [0, 0, 0, 1])
+        assert_vec_equal(Vector4(0, 0, 0, 0).w_one(), [0, 0, 0, 1])
 
 
 # ============================================================

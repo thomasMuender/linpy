@@ -84,7 +84,7 @@ class TestQuaternionConstruction:
 
     def test_identity_property(self):
         # The identity quaternion encodes zero rotation: (0, 0, 0, 1).
-        q = Quaternion(0, 0, 0, 1).identity
+        q = Quaternion(0, 0, 0, 1).identity()
         assert_quat_equal(q, [0, 0, 0, 1])
 
     def test_len(self):
