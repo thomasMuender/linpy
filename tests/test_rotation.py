@@ -11,7 +11,7 @@ import math
 import pytest
 import numpy as np
 
-from linpy.vector import Vec3, Vec4
+from linpy.vector import Vector3, Vector4
 from linpy.quaternion import Quaternion
 
 
@@ -64,12 +64,12 @@ class TestQuaternionConstruction:
 
     def test_from_vec4(self):
         # From a Vec4.
-        q = Quaternion(Vec4(1, 2, 3, 4))
+        q = Quaternion(Vector4(1, 2, 3, 4))
         assert_quat_equal(q, [1, 2, 3, 4])
 
     def test_from_vec3_and_scalar(self):
         # From a Vec3 (xyz) and a trailing scalar (w).
-        q = Quaternion(Vec3(1, 2, 3), 4)
+        q = Quaternion(Vector3(1, 2, 3), 4)
         assert_quat_equal(q, [1, 2, 3, 4])
 
     def test_from_numpy(self):
@@ -112,58 +112,58 @@ class TestAxisRotations:
     def test_rotation_x_90_rotates_y_to_z(self):
         # 90° about X sends the Y-axis onto the Z-axis.
         q = Quaternion.fromRotationX(90)
-        assert_vec_equal(q * Vec3(0, 1, 0), [0, 0, 1])
+        assert_vec_equal(q * Vector3(0, 1, 0), [0, 0, 1])
 
     def test_rotation_y_90_rotates_z_to_x(self):
         # 90° about Y sends the Z-axis onto the X-axis.
         q = Quaternion.fromRotationY(90)
-        assert_vec_equal(q * Vec3(0, 0, 1), [1, 0, 0])
+        assert_vec_equal(q * Vector3(0, 0, 1), [1, 0, 0])
 
     def test_rotation_z_90_rotates_x_to_y(self):
         # 90° about Z sends the X-axis onto the Y-axis.
         q = Quaternion.fromRotationZ(90)
-        assert_vec_equal(q * Vec3(1, 0, 0), [0, 1, 0])
+        assert_vec_equal(q * Vector3(1, 0, 0), [0, 1, 0])
 
     def test_rotation_x_180_flips_y(self):
         # 180° about X reverses Y and Z.
         q = Quaternion.fromRotationX(180)
-        assert_vec_equal(q * Vec3(0, 1, 0), [0, -1, 0])
+        assert_vec_equal(q * Vector3(0, 1, 0), [0, -1, 0])
 
     def test_rotation_y_180_flips_x(self):
         # 180° about Y reverses X and Z.
         q = Quaternion.fromRotationY(180)
-        assert_vec_equal(q * Vec3(1, 0, 0), [-1, 0, 0])
+        assert_vec_equal(q * Vector3(1, 0, 0), [-1, 0, 0])
 
     def test_rotation_z_180_flips_x(self):
         # 180° about Z reverses X and Y.
         q = Quaternion.fromRotationZ(180)
-        assert_vec_equal(q * Vec3(1, 0, 0), [-1, 0, 0])
+        assert_vec_equal(q * Vector3(1, 0, 0), [-1, 0, 0])
 
     def test_360_is_identity(self):
         # A full 360° rotation returns the vector to its original position.
         q = Quaternion.fromRotationX(360)
-        assert_vec_equal(q * Vec3(1, 2, 3), [1, 2, 3])
+        assert_vec_equal(q * Vector3(1, 2, 3), [1, 2, 3])
 
     def test_zero_rotation_is_identity(self):
         # 0° rotation should not change any vector.
         q = Quaternion.fromRotationY(0)
-        assert_vec_equal(q * Vec3(1, 2, 3), [1, 2, 3])
+        assert_vec_equal(q * Vector3(1, 2, 3), [1, 2, 3])
 
     def test_negative_angle(self):
         # A negative angle rotates in the opposite direction.
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         assert_vec_equal(Quaternion.fromRotationZ(90) * v, [0, 1, 0])
         assert_vec_equal(Quaternion.fromRotationZ(-90) * v, [0, -1, 0])
 
     def test_rotation_preserves_axis_vector(self):
         # Rotating about an axis leaves vectors along that axis unchanged.
         q = Quaternion.fromRotationX(45)
-        assert_vec_equal(q * Vec3(5, 0, 0), [5, 0, 0])
+        assert_vec_equal(q * Vector3(5, 0, 0), [5, 0, 0])
 
     def test_rotation_preserves_magnitude(self):
         # Rotations are isometries — they do not change vector length.
         q = Quaternion.fromRotationY(37)
-        v = Vec3(3, 4, 5)
+        v = Vector3(3, 4, 5)
         rotated = q * v
         assert rotated.magnitude() == pytest.approx(v.magnitude(), abs=1e-6)
 
@@ -171,7 +171,7 @@ class TestAxisRotations:
         # Composing two 90° rotations about the same axis should match one 180°.
         q90 = Quaternion.fromRotationZ(90)
         q180 = Quaternion.fromRotationZ(180)
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         result_twice = q90 * (q90 * v)
         result_180 = q180 * v
         assert_vec_equal(result_twice, list(result_180))
@@ -187,17 +187,17 @@ class TestInstanceRotateMethods:
     def test_rotateX(self):
         # Starting from identity, rotateX(90) should act like fromRotationX(90).
         q = Quaternion(0, 0, 0, 1).rotateX(90)
-        assert_vec_equal(q * Vec3(0, 1, 0), [0, 0, 1])
+        assert_vec_equal(q * Vector3(0, 1, 0), [0, 0, 1])
 
     def test_rotateY(self):
         # Starting from identity, rotateY(90) should act like fromRotationY(90).
         q = Quaternion(0, 0, 0, 1).rotateY(90)
-        assert_vec_equal(q * Vec3(0, 0, 1), [1, 0, 0])
+        assert_vec_equal(q * Vector3(0, 0, 1), [1, 0, 0])
 
     def test_rotateZ(self):
         # Starting from identity, rotateZ(90) should act like fromRotationZ(90).
         q = Quaternion(0, 0, 0, 1).rotateZ(90)
-        assert_vec_equal(q * Vec3(1, 0, 0), [0, 1, 0])
+        assert_vec_equal(q * Vector3(1, 0, 0), [0, 1, 0])
 
     def test_chained_rotations(self):
         # rotateX then rotateY should compose the two rotations (right-multiply).
@@ -240,7 +240,7 @@ class TestQuaternionMultiplication:
         # Rotating 90° about X then 90° about Y differs from Y then X.
         qx = Quaternion.fromRotationX(90)
         qy = Quaternion.fromRotationY(90)
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         result_xy = (qx * qy) * v
         result_yx = (qy * qx) * v
         # These should NOT be equal for a general vector.
@@ -276,7 +276,7 @@ class TestQuaternionInverse:
     def test_inverse_undoes_rotation(self):
         # Applying a rotation and then its inverse should restore the vector.
         q = Quaternion.fromRotationZ(60)
-        v = Vec3(1, 2, 3)
+        v = Vector3(1, 2, 3)
         rotated = q * v
         restored = q.inverse() * rotated
         assert_vec_equal(restored, [1, 2, 3])
@@ -337,7 +337,7 @@ class TestQuaternionNormalizeDot:
     def test_dot_with_vec4(self):
         # dot() should also accept a Vec4.
         q = Quaternion(1, 0, 0, 0)
-        v = Vec4(1, 0, 0, 0)
+        v = Vector4(1, 0, 0, 0)
         assert q.dot(v) == pytest.approx(1.0)
 
 
@@ -537,18 +537,18 @@ class TestAngleAxisConversion:
     def test_fromAngleAxis_90_x(self):
         # fromAngleAxis should create the same rotation as fromRotationX
         # for rotation about the X-axis.
-        q = Quaternion.fromAngleAxis(Vec3(1, 0, 0), 90)
-        assert_vec_equal(q * Vec3(0, 1, 0), [0, 0, 1])
+        q = Quaternion.fromAngleAxis(Vector3(1, 0, 0), 90)
+        assert_vec_equal(q * Vector3(0, 1, 0), [0, 0, 1])
 
     def test_fromAngleAxis_arbitrary(self):
         # Rotating 180° about the (1,1,0) axis (normalised internally)
         # should flip X↔Y and negate Z for appropriate vectors.
-        q = Quaternion.fromAngleAxis(Vec3(0, 0, 1), 90)
-        assert_vec_equal(q * Vec3(1, 0, 0), [0, 1, 0])
+        q = Quaternion.fromAngleAxis(Vector3(0, 0, 1), 90)
+        assert_vec_equal(q * Vector3(1, 0, 0), [0, 1, 0])
 
     def test_fromAngleAxis_does_not_mutate_input_axis(self):
         # The input axis vector must not be modified (normalized() returns a copy).
-        axis = Vec3(2, 0, 0)
+        axis = Vector3(2, 0, 0)
         Quaternion.fromAngleAxis(axis, 45)
         assert axis.x == 2.0  # original unchanged
 
@@ -563,33 +563,33 @@ class TestVectorRotation:
     def test_identity_does_not_rotate(self):
         # Multiplying by the identity quaternion should leave any vector unchanged.
         q = Quaternion(0, 0, 0, 1)
-        assert_vec_equal(q * Vec3(1, 2, 3), [1, 2, 3])
+        assert_vec_equal(q * Vector3(1, 2, 3), [1, 2, 3])
 
     def test_90_x_rotates_y_to_z(self):
         # Confirmed earlier; included here as a targeted rotation-vector test.
         q = Quaternion.fromRotationX(90)
-        assert_vec_equal(q * Vec3(0, 1, 0), [0, 0, 1])
+        assert_vec_equal(q * Vector3(0, 1, 0), [0, 0, 1])
 
     def test_90_x_rotates_z_to_neg_y(self):
         # 90° about X sends Z to -Y.
         q = Quaternion.fromRotationX(90)
-        assert_vec_equal(q * Vec3(0, 0, 1), [0, -1, 0])
+        assert_vec_equal(q * Vector3(0, 0, 1), [0, -1, 0])
 
     def test_arbitrary_rotation(self):
         # 90° about Z: (1,1,0) → (-1,1,0) (the point swings 90° CCW in XY).
         q = Quaternion.fromRotationZ(90)
-        assert_vec_equal(q * Vec3(1, 1, 0), [-1, 1, 0])
+        assert_vec_equal(q * Vector3(1, 1, 0), [-1, 1, 0])
 
     def test_rotation_of_zero_vector(self):
         # Rotating the zero vector should always yield zero.
         q = Quaternion.fromRotationY(42)
-        assert_vec_equal(q * Vec3(0, 0, 0), [0, 0, 0])
+        assert_vec_equal(q * Vector3(0, 0, 0), [0, 0, 0])
 
     def test_multiple_rotations_on_vector(self):
         # Applying qx then qy to a vector should equal (qx * qy) applied once.
         qx = Quaternion.fromRotationX(30)
         qy = Quaternion.fromRotationY(45)
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         step = qx * v
         sequential = qy * step
         composed = (qy * qx) * v
@@ -606,7 +606,7 @@ class TestRotationEdgeCases:
     def test_very_small_rotation(self):
         # A near-zero rotation (0.001°) should barely change the vector.
         q = Quaternion.fromRotationX(0.001)
-        v = Vec3(0, 1, 0)
+        v = Vector3(0, 1, 0)
         rotated = q * v
         # Should be very close to the original.
         assert_vec_equal(rotated, [0, 1, 0], tol=1e-3)
@@ -614,14 +614,14 @@ class TestRotationEdgeCases:
     def test_near_360_rotation(self):
         # 359.999° about Y should nearly return to the starting position.
         q = Quaternion.fromRotationY(359.999)
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         assert_vec_equal(q * v, [1, 0, 0], tol=1e-3)
 
     def test_180_rotation_numerical_stability(self):
         # 180° rotations are a common source of numerical issues because
         # sin(90°) = 1 exactly and cos(90°) = 0 exactly.
         q = Quaternion.fromRotationY(180)
-        v = Vec3(1, 0, 0)
+        v = Vector3(1, 0, 0)
         assert_vec_equal(q * v, [-1, 0, 0])
 
     def test_double_cover_same_rotation(self):
@@ -629,7 +629,7 @@ class TestRotationEdgeCases:
         # should give the same result.
         q = Quaternion.fromRotationZ(60)
         neg_q = q * -1
-        v = Vec3(1, 2, 3)
+        v = Vector3(1, 2, 3)
         assert_vec_equal(q * v, list(neg_q * v))
 
     def test_toAngleAxis_identity_returns_zero_angle(self):
@@ -673,7 +673,7 @@ class TestRotationEdgeCases:
         qx = Quaternion.fromRotationX(90)
         qy = Quaternion.fromRotationY(90)
         qz = Quaternion.fromRotationZ(90)
-        combined = qz * (qy * (qx * Vec3(1, 0, 0)))
+        combined = qz * (qy * (qx * Vector3(1, 0, 0)))
         # 90°X: (1,0,0) → (1,0,0)  (X axis unchanged)
         # 90°Y: (1,0,0) → (0,0,-1)
         # 90°Z: (0,0,-1) → (0,0,-1) (Z component unchanged)
@@ -682,7 +682,7 @@ class TestRotationEdgeCases:
     def test_matrix_vector_rotation_matches_quaternion(self):
         # Rotating via q*v and via the equivalent rotation matrix should agree.
         q = Quaternion.fromEuler(25, 40, 55)
-        v = Vec3(1, 2, 3)
+        v = Vector3(1, 2, 3)
         rotated_q = q * v
         mat = q.toMatrix3x3()
         rotated_m = mat @ np.array([1, 2, 3])
@@ -693,6 +693,6 @@ class TestRotationEdgeCases:
         # the original vector regardless of angle.
         for deg in [1, 15, 45, 90, 135, 179]:
             q = Quaternion.fromRotationX(deg)
-            v = Vec3(3, -7, 11)
+            v = Vector3(3, -7, 11)
             result = q.inverse() * (q * v)
             assert_vec_equal(result, [3, -7, 11], tol=1e-5)

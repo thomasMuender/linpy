@@ -13,7 +13,7 @@ class Vector:
     __slots__ = 'num', 'values'
 
     def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vector) -> None:
-        if type(self) not in (Vec2, Vec3, Vec4):
+        if type(self) not in (Vector2, Vector3, Vector4):
             raise ValueError("Cannot instantiate Vector directly; use Vec2, Vec3, or Vec4")
 
         self.num: int = int(type(self).__name__[-1])
@@ -26,7 +26,7 @@ class Vector:
         for value in args:
             if isinstance(value, (int, float)):
                 self.values.append(float(value))
-            elif isinstance(value, (list, tuple, Vec2, Vec3, Vec4)):
+            elif isinstance(value, (list, tuple, Vector2, Vector3, Vector4)):
                 for v in value:
                     self.values.append(float(v))
             elif isinstance(value, np.ndarray):
@@ -125,11 +125,11 @@ class Vector:
                 return self.values[indices[0]]
             vals = [self.values[i] for i in indices]
             if len(name) == 2:
-                return Vec2(vals)
+                return Vector2(vals)
             elif len(name) == 3:
-                return Vec3(vals)
+                return Vector3(vals)
             elif len(name) == 4:
-                return Vec4(vals)
+                return Vector4(vals)
             raise IndexError(f"Swizzle too long: '{name}'")
         raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
@@ -138,11 +138,11 @@ class Vector:
         if isinstance(sliced, (int, float)):
             return sliced
         if len(sliced) == 2:
-            return Vec2(sliced)
+            return Vector2(sliced)
         elif len(sliced) == 3:
-            return Vec3(sliced)
+            return Vector3(sliced)
         elif len(sliced) == 4:
-            return Vec4(sliced)
+            return Vector4(sliced)
         raise ValueError(f"Slice produced {len(sliced)} elements; expected 2, 3, or 4")
 
     def __setattr__(self, name: str, value: Scalar | Vector | list[float] | tuple[float, ...]) -> None:
@@ -157,7 +157,7 @@ class Vector:
                 for n in name:
                     self.values[name_to_idx(n)] = float(value)
                 done = True
-            elif isinstance(value, (list, tuple, Vec2, Vec3, Vec4)) and 1 < len(name) <= self.num and len(name) == len(value):
+            elif isinstance(value, (list, tuple, Vector2, Vector3, Vector4)) and 1 < len(name) <= self.num and len(name) == len(value):
                 for i, n in enumerate(name):
                     self.values[name_to_idx(n)] = float(value[i])
                 done = True
@@ -207,76 +207,76 @@ class Vector:
         return np.array(self.values)
 
 
-class Vec2(Vector):
+class Vector2(Vector):
     __slots__ = ()
 
     @property
-    def zero(self) -> Vec2:
-        return Vec2(0.0, 0.0)
+    def zero(self) -> Vector2:
+        return Vector2(0.0, 0.0)
     
     @property
-    def one(self) -> Vec2:
-        return Vec2(1.0, 1.0)
+    def one(self) -> Vector2:
+        return Vector2(1.0, 1.0)
     
     @property
-    def x_one(self) -> Vec2:
-        return Vec2(1.0, 0.0)
+    def x_one(self) -> Vector2:
+        return Vector2(1.0, 0.0)
     
     @property
-    def y_one(self) -> Vec2:
-        return Vec2(0.0, 1.0)
+    def y_one(self) -> Vector2:
+        return Vector2(0.0, 1.0)
 
 
-class Vec3(Vector):
+class Vector3(Vector):
     __slots__ = ()
     
     @property
-    def zero(self) -> Vec3:
-        return Vec3(0.0, 0.0, 0.0)
+    def zero(self) -> Vector3:
+        return Vector3(0.0, 0.0, 0.0)
     
     @property
-    def one(self) -> Vec3:
-        return Vec3(1.0, 1.0, 1.0)
+    def one(self) -> Vector3:
+        return Vector3(1.0, 1.0, 1.0)
     
     @property
-    def x_one(self) -> Vec3:
-        return Vec3(1.0, 0.0, 0.0)
+    def x_one(self) -> Vector3:
+        return Vector3(1.0, 0.0, 0.0)
     
     @property
-    def y_one(self) -> Vec3:
-        return Vec3(0.0, 1.0, 0.0)
+    def y_one(self) -> Vector3:
+        return Vector3(0.0, 1.0, 0.0)
     
     @property
-    def z_one(self) -> Vec3:
-        return Vec3(0.0, 0.0, 1.0)
+    def z_one(self) -> Vector3:
+        return Vector3(0.0, 0.0, 1.0)
     
-    def cross(self, other: Vec3) -> Vec3:
+    def cross(self, other: Vector3) -> Vector3:
         return (self * other.yzx - self.yzx * other).yzx
 
 
-class Vec4(Vector):
+class Vector4(Vector):
     __slots__ = ()
     
     @property
-    def zero(self) -> Vec4:
-        return Vec4(0.0, 0.0, 0.0, 0.0)
+    def zero(self) -> Vector4:
+        return Vector4(0.0, 0.0, 0.0, 0.0)
     
     @property
-    def one(self) -> Vec4:
-        return Vec4(1.0, 1.0, 1.0, 1.0)
+    def one(self) -> Vector4:
+        return Vector4(1.0, 1.0, 1.0, 1.0)
     
     @property
-    def x_one(self) -> Vec4:
-        return Vec4(1.0, 0.0, 0.0, 0.0)
+    def x_one(self) -> Vector4:
+        return Vector4(1.0, 0.0, 0.0, 0.0)
     
     @property
-    def y_one(self) -> Vec4:
-        return Vec4(0.0, 1.0, 0.0, 0.0)
+    def y_one(self) -> Vector4:
+        return Vector4(0.0, 1.0, 0.0, 0.0)
     
     @property
-    def z_one(self) -> Vec4:
-        return Vec4(0.0, 0.0, 1.0, 0.0)
+    def z_one(self) -> Vector4:
+        return Vector4(0.0, 0.0, 1.0, 0.0)
     
     @property
-    def w_one(self) -> Vec4:
-        return Vec4(0.0, 0.0, 0.0, 1.0)
+    def w_one(self) -> Vector4:
+        return Vector4(0.0, 0.0, 0.0, 1.0)

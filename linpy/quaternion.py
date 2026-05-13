@@ -4,32 +4,32 @@ import math
 from typing import Iterator, Union
 import numpy as np
 from .util import rcp, rsqrt, sincos, has_unique_characters, name_to_idx
-from .vector import Vec2, Vec3, Vec4, Scalar
+from .vector import Vector2, Vector3, Vector4, Scalar
 
 # Pre-computed sign sequences for each Euler rotation order
-_EULER_SIGN_MAP: dict[str, Vec4] = {
-    "xyz": Vec4(-1., 1., -1., 1.),
-    "xzy": Vec4(1., 1., -1., -1.),
-    "yxz": Vec4(-1., 1., 1., -1.),
-    "yzx": Vec4(-1., -1., 1., 1.),
-    "zxy": Vec4(1., -1., -1., 1.),
-    "zyx": Vec4(1., -1., 1., -1.),
+_EULER_SIGN_MAP: dict[str, Vector4] = {
+    "xyz": Vector4(-1., 1., -1., 1.),
+    "xzy": Vector4(1., 1., -1., -1.),
+    "yxz": Vector4(-1., 1., 1., -1.),
+    "yzx": Vector4(-1., -1., 1., 1.),
+    "zxy": Vector4(1., -1., -1., 1.),
+    "zyx": Vector4(1., -1., 1., -1.),
 }
 
 
 class Quaternion:
     __slots__ = 'values'
 
-    def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vec2 | Vec3 | Vec4) -> None:
+    def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vector2 | Vector3 | Vector4) -> None:
         if len(args) == 1 and isinstance(args[0], (int, float)):
-            self.values: Vec4 = Vec4([float(args[0])] * 4)
+            self.values: Vector4 = Vector4([float(args[0])] * 4)
             return
 
         values: list[float] = []
         for value in args:
             if isinstance(value, (int, float)):
                 values.append(float(value))
-            elif isinstance(value, (list, tuple, Vec2, Vec3, Vec4)):
+            elif isinstance(value, (list, tuple, Vector2, Vector3, Vector4)):
                 for v in value:
                     values.append(float(v))
             elif isinstance(value, np.ndarray):
@@ -41,7 +41,7 @@ class Quaternion:
         if len(values) != 4:
             raise AttributeError(f"Quaternion requires 4 components, got {len(values)}")
 
-        self.values = Vec4(values)
+        self.values = Vector4(values)
 
     def __repr__(self) -> str:
         return f"Quaternion({self.x!r}, {self.y!r}, {self.z!r}, {self.w!r})"
@@ -68,15 +68,15 @@ class Quaternion:
     def __neg__(self) -> Quaternion:
         return Quaternion(-self.values)
 
-    def __mul__(self, other: Quaternion | Vec3 | Scalar) -> Quaternion | Vec3:
+    def __mul__(self, other: Quaternion | Vector3 | Scalar) -> Quaternion | Vector3:
         if isinstance(other, Quaternion):
             return Quaternion(
                 self.values.wwww * other.values
                 + (self.values.xyzx * other.values.wwwx + self.values.yzxy * other.values.zxyy)
-                * Vec4(1.0, 1.0, 1.0, -1.0)
+                * Vector4(1.0, 1.0, 1.0, -1.0)
                 - self.values.zxyz * other.values.yzxz
             )
-        elif isinstance(other, Vec3):
+        elif isinstance(other, Vector3):
             t = 2 * self.xyz.cross(other)
             return other + self.w * t + self.xyz.cross(t)
         elif isinstance(other, (float, int)):
@@ -88,10 +88,10 @@ class Quaternion:
             return Quaternion(self.values * other)
         return NotImplemented  # type: ignore[return-value]
 
-    def __getattr__(self, name: str) -> float | Vec2 | Vec3 | Vec4:
+    def __getattr__(self, name: str) -> float | Vector2 | Vector3 | Vector4:
         return self.values.__getattr__(name)
 
-    def __getitem__(self, items: int | slice) -> float | Vec2 | Vec3 | Vec4:
+    def __getitem__(self, items: int | slice) -> float | Vector2 | Vector3 | Vector4:
         return self.values.__getitem__(items)
 
     def __setattr__(self, name: str, value: object) -> None:
@@ -123,7 +123,7 @@ class Quaternion:
         return Quaternion(0., 0., s, c)
 
     @staticmethod
-    def fromAngleAxis(axis: Vec3, deg: float) -> Quaternion:
+    def fromAngleAxis(axis: Vector3, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
         return Quaternion(axis.normalized() * s, c)
 
@@ -178,18 +178,18 @@ class Quaternion:
             raise ValueError(f"Invalid Euler order: '{order}'. Must be a permutation of XYZ.")
         seq = _EULER_SIGN_MAP[key]
 
-        h = 0.5 * Vec3(degX, degY, degZ).radians()
+        h = 0.5 * Vector3(degX, degY, degZ).radians()
         s = h.sin()
         c = h.cos()
         return Quaternion(
-            Vec4(s.xyz, c.x) * c.yxxy * c.zzyz
-            + s.yxxy * s.zzyz * Vec4(c.xyz, s.x) * seq
+            Vector4(s.xyz, c.x) * c.yxxy * c.zzyz
+            + s.yxxy * s.zzyz * Vector4(c.xyz, s.x) * seq
         )
 
-    def dot(self, other: Quaternion | Vec4) -> float:
+    def dot(self, other: Quaternion | Vector4) -> float:
         if isinstance(other, Quaternion):
             return self.values.dot(other.values)
-        elif isinstance(other, Vec4):
+        elif isinstance(other, Vector4):
             return self.values.dot(other)
         raise TypeError(f"dot() expects Quaternion or Vec4, got {type(other).__name__}")
 
@@ -200,7 +200,7 @@ class Quaternion:
         return Quaternion(rsqrt(self.values.dot(self.values)) * self.values)
 
     def inverse(self) -> Quaternion:
-        return Quaternion(rcp(self.values.dot(self.values)) * self.values * Vec4(-1., -1., -1., 1.))
+        return Quaternion(rcp(self.values.dot(self.values)) * self.values * Vector4(-1., -1., -1., 1.))
 
     def rotateX(self, deg: float) -> Quaternion:
         s, c = sincos(0.5 * deg)
@@ -228,17 +228,17 @@ class Quaternion:
             [2 * (xz - wy),       2 * (yz + wx),      1 - 2 * (xx + yy)],
         ])
 
-    def toAngleAxis(self) -> tuple[Vec3, float]:
+    def toAngleAxis(self) -> tuple[Vector3, float]:
         q = self.normalized()
         w = max(-1.0, min(1.0, q.w))
         t = math.sqrt(1.0 - w * w)
         deg = math.degrees(math.acos(w) * 2.0)
         if t < 1e-8:
-            return Vec3(1.0, 0.0, 0.0), deg
-        axis = Vec3(q.x / t, q.y / t, q.z / t)
+            return Vector3(1.0, 0.0, 0.0), deg
+        axis = Vector3(q.x / t, q.y / t, q.z / t)
         return axis, deg
 
-    def toEuler(self, order: str = "ZXY") -> Vec3:
+    def toEuler(self, order: str = "ZXY") -> Vector3:
         q = self.normalized()
         key = order.lower()
         if key not in _EULER_SIGN_MAP:
@@ -285,4 +285,4 @@ class Quaternion:
         euler[j] = rj
         euler[k] = rk
 
-        return Vec3(euler).degree()
+        return Vector3(euler).degree()
