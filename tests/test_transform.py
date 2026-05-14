@@ -8,6 +8,7 @@ and edge cases related to transform trees.
 
 import math
 import pytest
+import numpy as np
 
 from linpy.vector import Vector3, Vector4
 from linpy.quaternion import Quaternion
@@ -713,3 +714,51 @@ class TestLookAt:
         # Child world position should have been updated
         expected_child_pos = parent.rotation * Vector3(0, 0, 1) + parent.position
         assert_vec_equal(child.position, list(expected_child_pos), tol=1e-5)
+
+
+# ============================================================
+# to_matrix4x4 / from_matrix4x4
+# ============================================================
+
+class TestMatrix4x4:
+    def test_identity_gives_identity_matrix(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        np.testing.assert_allclose(t.to_matrix4x4(), np.eye(4), atol=1e-7)
+
+    def test_position_in_last_column(self):
+        t = Transform(Vector3(1, 2, 3), Quaternion.identity())
+        m = t.to_matrix4x4()
+        np.testing.assert_allclose(m[:3, 3], [1, 2, 3], atol=1e-7)
+        np.testing.assert_allclose(m[3, :], [0, 0, 0, 1], atol=1e-7)
+
+    def test_rotation_in_upper_left(self):
+        q = Quaternion.from_rotation_y(90)
+        t = Transform(Vector3.zero(), q)
+        m = t.to_matrix4x4()
+        np.testing.assert_allclose(m[:3, :3], q.to_matrix3x3(), atol=1e-7)
+
+    def test_roundtrip_to_from(self):
+        pos = Vector3(5, -3, 7)
+        rot = Quaternion.from_euler(30, 45, 60)
+        t = Transform(pos, rot, "test")
+        m = t.to_matrix4x4()
+        t2 = Transform.from_matrix4x4(m, "restored")
+        assert_vec_equal(t2.position, list(pos), tol=1e-5)
+        assert_vec_equal(t2.rotation, list(rot), tol=1e-5)
+        assert t2.name == "restored"
+
+    def test_matrix_transforms_point(self):
+        t = Transform(Vector3(10, 0, 0), Quaternion.from_rotation_z(90))
+        m = t.to_matrix4x4()
+        pt = np.array([1, 0, 0, 1])
+        result = m @ pt
+        expected = t * Vector3(1, 0, 0)
+        np.testing.assert_allclose(result[:3], list(expected), atol=1e-5)
+
+    def test_from_matrix4x4_invalid_shape_raises(self):
+        with pytest.raises(ValueError):
+            Transform.from_matrix4x4(np.eye(3))
+
+    def test_from_matrix4x4_not_array_raises(self):
+        with pytest.raises(ValueError):
+            Transform.from_matrix4x4([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])

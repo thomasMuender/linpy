@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterator
+import numpy as np
 from .vector import Vector3, Vector4
 from .quaternion import Quaternion
 
@@ -142,6 +143,21 @@ class Transform:
             raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
         self.__children[key] = newvalue
         self.__children[key].parent = self
+
+    def to_matrix4x4(self) -> np.ndarray:
+        m = self.rotation.to_matrix4x4()
+        m[0, 3] = self.position.x
+        m[1, 3] = self.position.y
+        m[2, 3] = self.position.z
+        return m
+
+    @staticmethod
+    def from_matrix4x4(matrix: np.ndarray, name: str = "") -> Transform:
+        if not isinstance(matrix, np.ndarray) or matrix.shape != (4, 4):
+            raise ValueError("Input must be a 4x4 numpy array")
+        pos = Vector3(float(matrix[0, 3]), float(matrix[1, 3]), float(matrix[2, 3]))
+        rot = Quaternion.from_matrix3x3(matrix[:3, :3])
+        return Transform(pos, rot, name)
 
     def inverse(self) -> Transform:
         inv_rot = self.rotation.inverse()

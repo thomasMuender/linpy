@@ -308,6 +308,13 @@ inv = t.inverse()   # returns a new Transform that undoes t
 inv * (t * point)   # ≈ point
 ```
 
+### Matrix Conversion
+
+```python
+m = t.to_matrix4x4()                        # 4×4 homogeneous transform matrix (numpy)
+t = Transform.from_matrix4x4(m, "name")     # reconstruct Transform from a 4×4 matrix
+```
+
 ---
 
 ## Full Example
