@@ -1,4 +1,4 @@
-# linpy
+# LINPY
 
 A Python library for 3D vector math, quaternion rotations, and scene-graph transforms.
 
@@ -94,18 +94,21 @@ v.sin()       # component-wise sine (radians)
 v.cos()       # component-wise cosine (radians)
 v.radians()   # degrees → radians per component
 v.degree()    # radians → degrees per component
-v.toList()    # returns a copy as list[float]
-v.toNumpy()   # returns a numpy array
+v.to_list()   # returns a copy as list[float]
+v.to_numpy()  # returns a numpy array
 ```
 
 ### Constants (properties on each type)
 
 ```python
-Vector3.zero    # Vector3(0, 0, 0)
-Vector3.one     # Vector3(1, 1, 1)
-Vector3.x_one   # Vector3(1, 0, 0)
-Vector3.y_one   # Vector3(0, 1, 0)
-Vector3.z_one   # Vector3(0, 0, 1)
+Vector3.zero()    # Vector3(0, 0, 0)
+Vector3.one()     # Vector3(1, 1, 1)
+Vector3.x_one()   # Vector3(1, 0, 0)
+Vector3.y_one()   # Vector3(0, 1, 0)
+Vector3.z_one()   # Vector3(0, 0, 1)
+
+# Vector4 additionally provides:
+Vector4.w_one()   # Vector4(0, 0, 0, 1)
 ```
 
 ---
@@ -128,13 +131,14 @@ Quaternion(Vector4(x, y, z, w))   # from Vector4
 ### Factory Methods
 
 ```python
-Quaternion.fromRotationX(90)           # 90° rotation about X axis (degrees)
-Quaternion.fromRotationY(45)           # rotation about Y axis
-Quaternion.fromRotationZ(30)           # rotation about Z axis
-Quaternion.fromAngleAxis(axis, deg)    # axis (Vector3) + angle in degrees
-Quaternion.fromEuler(rx, ry, rz)       # Euler angles in degrees, default order ZXY
-Quaternion.fromEuler(rx, ry, rz, "XYZ")  # explicit rotation order
-Quaternion.fromMatrix3x3(matrix)       # from a 3×3 numpy rotation matrix
+Quaternion.identity()                     # identity quaternion (no rotation)
+Quaternion.from_rotation_x(90)            # 90° rotation about X axis (degrees)
+Quaternion.from_rotation_y(45)            # rotation about Y axis
+Quaternion.from_rotation_z(30)            # rotation about Z axis
+Quaternion.from_angle_axis(axis, deg)     # axis (Vector3) + angle in degrees
+Quaternion.from_euler(rx, ry, rz)         # Euler angles in degrees, default order ZXY
+Quaternion.from_euler(rx, ry, rz, "XYZ") # explicit rotation order
+Quaternion.from_matrix3x3(matrix)         # from a 3×3 numpy rotation matrix
 ```
 
 Supported Euler orders: `XYZ`, `XZY`, `YXZ`, `YZX`, `ZXY`, `ZYX`.
@@ -142,7 +146,7 @@ Supported Euler orders: `XYZ`, `XZY`, `YXZ`, `YZX`, `ZXY`, `ZYX`.
 ### Rotating Vectors
 
 ```python
-q = Quaternion.fromRotationZ(90)
+q = Quaternion.from_rotation_z(90)
 q * Vector3(1, 0, 0)   # Vector3(0.0, 1.0, 0.0)
 ```
 
@@ -159,18 +163,18 @@ q.dot(other)     # dot product with another Quaternion or Vector4
 ### Incremental Rotation
 
 ```python
-q = q.rotateX(30)   # apply additional 30° rotation about X
-q = q.rotateY(45)
-q = q.rotateZ(60)
+q = q.rotate_x(30)   # apply additional 30° rotation about X
+q = q.rotate_y(45)
+q = q.rotate_z(60)
 ```
 
 ### Conversion
 
 ```python
-q.toEuler()              # Vector3 of Euler angles (degrees), default order ZXY
-q.toEuler("XYZ")         # explicit order
-q.toMatrix3x3()          # 3×3 numpy rotation matrix
-q.toAngleAxis()          # (axis: Vector3, angle_degrees: float)
+q.to_euler()              # Vector3 of Euler angles (degrees), default order ZXY
+q.to_euler("XYZ")         # explicit order
+q.to_matrix3x3()          # 3×3 numpy rotation matrix
+q.to_angle_axis()         # (axis: Vector3, angle_degrees: float)
 ```
 
 ---
@@ -182,9 +186,9 @@ q.toAngleAxis()          # (axis: Vector3, angle_degrees: float)
 ```python
 from linpy import Transform, Vector3, Quaternion
 
-t = Transform(Vector3(1, 2, 3), Quaternion.fromEuler(0, 0, 0), "myNode")
+t = Transform(Vector3(1, 2, 3), Quaternion.from_euler(0, 0, 0), "myNode")
 # name is optional:
-t = Transform(Vector3(1, 2, 3), Quaternion.fromEuler(0, 0, 0))
+t = Transform(Vector3(1, 2, 3), Quaternion.from_euler(0, 0, 0))
 ```
 
 ### Properties
@@ -203,8 +207,8 @@ Setting any of these properties automatically recomputes the dependent values an
 ### Parent–Child Hierarchy
 
 ```python
-parent = Transform(Vector3(10, 0, 0), Quaternion.fromEuler(0, 0, 0), "parent")
-child  = Transform(Vector3( 5, 0, 0), Quaternion.fromEuler(0, 0, 0), "child")
+parent = Transform(Vector3(10, 0, 0), Quaternion.from_euler(0, 0, 0), "parent")
+child  = Transform(Vector3( 5, 0, 0), Quaternion.from_euler(0, 0, 0), "child")
 
 child.parent = parent          # child.position → Vector3(15, 0, 0)
 parent.add_child(other_child)  # alternative API
@@ -260,9 +264,9 @@ inv * (t * point)   # ≈ point
 from linpy import Vector3, Quaternion, Transform
 
 # Build a small scene graph
-root  = Transform(Vector3(0, 0, 0), Quaternion.fromEuler(0, 90, 0), "root")
-arm   = Transform(Vector3(2, 0, 0), Quaternion.fromEuler(0,  0, 0), "arm")
-tip   = Transform(Vector3(1, 0, 0), Quaternion.fromEuler(0,  0, 0), "tip")
+root  = Transform(Vector3(0, 0, 0), Quaternion.from_euler(0, 90, 0), "root")
+arm   = Transform(Vector3(2, 0, 0), Quaternion.from_euler(0,  0, 0), "arm")
+tip   = Transform(Vector3(1, 0, 0), Quaternion.from_euler(0,  0, 0), "tip")
 
 arm.parent = root
 tip.parent = arm
@@ -271,7 +275,7 @@ print(tip.position)     # world position: propagated through tree
 print(tip.rotation)     # world rotation: accumulated from root
 
 # Rotate the root and see all descendants update automatically
-root.rotate(Quaternion.fromRotationY(45))
+root.rotate(Quaternion.from_rotation_y(45))
 print(tip.position)     # updated world position
 
 # Transform a world-space point into the tip's local frame
