@@ -97,17 +97,17 @@ class Transform:
         self.__propagate()
 
     @property
-    def forward(self) -> Vector3:
-        return self.rotation * Vector3(0.0, 0.0, 1.0)
-
-    @property
-    def right(self) -> Vector3:
+    def x_dir(self) -> Vector3:
         return self.rotation * Vector3(1.0, 0.0, 0.0)
 
     @property
-    def up(self) -> Vector3:
+    def y_dir(self) -> Vector3:
         return self.rotation * Vector3(0.0, 1.0, 0.0)
     
+    @property
+    def z_dir(self) -> Vector3:
+        return self.rotation * Vector3(0.0, 0.0, 1.0)
+
     def __repr__(self) -> str:
         return f"Transform({self.name!r}, {self.position!r}, {self.rotation!r})"
 

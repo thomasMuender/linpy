@@ -243,9 +243,9 @@ t = Transform(Vector3(1, 2, 3), Quaternion.from_euler(0, 0, 0))
 | `local_rotation` | Rotation relative to parent (`Quaternion`) |
 | `parent` | Parent `Transform` or `None` |
 | `name` | Optional string label |
-| `forward` | World-space forward direction (+Z rotated by `rotation`) |
-| `right` | World-space right direction (+X rotated by `rotation`) |
-| `up` | World-space up direction (+Y rotated by `rotation`) |
+| `z_dir` | World-space Z direction (+Z rotated by `rotation`) |
+| `x_dir` | World-space X direction (+X rotated by `rotation`) |
+| `y_dir` | World-space Y direction (+Y rotated by `rotation`) |
 
 Setting any writable property automatically recomputes the dependent values and cascades the update to all children.
 
