@@ -87,6 +87,33 @@ a.normalized()    # returns a new normalised vector
 Vector3(1, 0, 0).cross(Vector3(0, 1, 0))  # Vector3(0.0, 0.0, 1.0)
 ```
 
+### Interpolation & Distance
+
+```python
+a.lerp(b, 0.5)         # linear interpolation (t=0 → a, t=1 → b)
+a.distance(b)          # Euclidean distance → float
+a.distance_squared(b)  # squared distance (avoids sqrt) → float
+a.angle_between(b)     # angle in degrees between two vectors → float
+```
+
+### Projection & Reflection
+
+```python
+v.project(onto)        # project v onto another vector
+v.reflect(normal)      # reflect v around a surface normal
+v.clamp_magnitude(5.0) # cap vector length to 5.0, preserving direction
+```
+
+### Component-wise Math
+
+```python
+v.abs()          # component-wise absolute value
+a.min(b)         # component-wise minimum
+a.max(b)         # component-wise maximum
+v.floor()        # component-wise floor
+v.ceil()         # component-wise ceil
+```
+
 ### Trigonometric & Conversion Helpers
 
 ```python
@@ -168,12 +195,27 @@ q = q.rotate_y(45)
 q = q.rotate_z(60)
 ```
 
+### Interpolation & Comparison
+
+```python
+q1.slerp(q2, 0.5)       # spherical linear interpolation (t=0 → q1, t=1 → q2)
+q1.angle_between(q2)    # angle in degrees between two rotations → float
+```
+
+### Look Rotation
+
+```python
+Quaternion.look_rotation(forward)       # quaternion facing a direction (default up = Y)
+Quaternion.look_rotation(forward, up)   # with explicit up vector
+```
+
 ### Conversion
 
 ```python
 q.to_euler()              # Vector3 of Euler angles (degrees), default order ZXY
 q.to_euler("XYZ")         # explicit order
 q.to_matrix3x3()          # 3×3 numpy rotation matrix
+q.to_matrix4x4()          # 4×4 homogeneous rotation matrix (numpy)
 q.to_angle_axis()         # (axis: Vector3, angle_degrees: float)
 ```
 
@@ -201,8 +243,11 @@ t = Transform(Vector3(1, 2, 3), Quaternion.from_euler(0, 0, 0))
 | `local_rotation` | Rotation relative to parent (`Quaternion`) |
 | `parent` | Parent `Transform` or `None` |
 | `name` | Optional string label |
+| `forward` | World-space forward direction (+Z rotated by `rotation`) |
+| `right` | World-space right direction (+X rotated by `rotation`) |
+| `up` | World-space up direction (+Y rotated by `rotation`) |
 
-Setting any of these properties automatically recomputes the dependent values and cascades the update to all children.
+Setting any writable property automatically recomputes the dependent values and cascades the update to all children.
 
 ### Parent–Child Hierarchy
 
@@ -231,6 +276,13 @@ for c in parent:
 ```python
 t.translate(Vector3(1, 0, 0))            # move by offset in local frame
 t.rotate(Quaternion.fromRotationZ(90)) # accumulate additional rotation
+```
+
+### Look At
+
+```python
+t.look_at(Vector3(10, 0, 5))                    # orient to face a target (default up = Y)
+t.look_at(Vector3(10, 0, 5), Vector3(0, 0, 1))  # with explicit up vector
 ```
 
 ### Coordinate Conversion
@@ -329,6 +381,13 @@ sg.apply_transform("r_hand", "torso",   Vector3( 1, 0, 0), Quaternion.identity()
 torso = sg["torso"]          # returns the Transform for "torso"
 print(torso.position)        # world-space position
 print(torso.local_position)  # position relative to parent
+```
+
+### Removing Nodes
+
+```python
+sg.remove("l_hand")   # remove a node; its children are reparented to its parent
+sg.remove("unknown")  # no-op if the name does not exist
 ```
 
 ### Printing the Tree
