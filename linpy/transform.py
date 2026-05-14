@@ -122,7 +122,7 @@ class Transform:
     def __iter__(self) -> Iterator[Transform]:
         return self.__children.__iter__()
     
-    def __getitem__(self, items: int | slice) -> Transform:
+    def __getitem__(self, items: int | slice) -> Transform | list[Transform]:
         return self.__children.__getitem__(items)
 
     def __setitem__(self, key: int, newvalue: Transform) -> None:

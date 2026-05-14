@@ -1,6 +1,5 @@
 import math
 
-
 def clamp(value: float, min_val: float, max_val: float) -> float:
     return max(min(value, max_val), min_val)
 

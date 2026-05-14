@@ -8,7 +8,6 @@ from .util import rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID
 # Type alias for scalar values accepted in arithmetic
 Scalar = Union[int, float]
 
-
 class Vector:
     __slots__ = 'num', 'values'
 

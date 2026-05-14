@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
-from typing import Iterator, Union
+from typing import Iterator
 import numpy as np
-from .util import rcp, rsqrt, sincos, has_unique_characters, name_to_idx
+from .util import rcp, rsqrt, sincos, name_to_idx
 from .vector import Vector2, Vector3, Vector4, Scalar
 
 # Pre-computed sign sequences for each Euler rotation order
