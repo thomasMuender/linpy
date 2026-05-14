@@ -281,3 +281,77 @@ print(tip.position)     # updated world position
 # Transform a world-space point into the tip's local frame
 local_pt = tip.world_to_local(Vector3(5, 0, 0))
 ```
+
+---
+
+## Scene Graph
+
+`SceneGraph` is a managed registry of named `Transform` nodes. It handles out-of-order insertion (a child can be registered before its parent) and provides a single entry point for updating the pose of any node.
+
+```python
+from linpy import SceneGraph, Vector3, Quaternion
+```
+
+### Construction
+
+```python
+sg = SceneGraph()
+sg.root        # the implicit root Transform (name "__root__")
+```
+
+### Adding / Updating Transforms
+
+```python
+sg.apply_transform(
+    transform_name,   # str — name of the node to create or update
+    parent_name,      # str — name of its parent (use SceneGraph.root_name for root)
+    local_position,   # Vector3
+    local_rotation,   # Quaternion
+)
+```
+
+- If the named node does not exist it is created and attached to the parent.
+- If the node already exists its pose and parent are updated in place.
+- If the parent does not exist yet, a placeholder is created automatically and will be replaced when `apply_transform` is later called for that name.
+
+```python
+root_name = SceneGraph.root_name   # "__root__"
+
+sg.apply_transform("torso",  root_name, Vector3(0, 1, 0), Quaternion.identity())
+sg.apply_transform("head",   "torso",   Vector3(0, 1, 0), Quaternion.identity())
+sg.apply_transform("l_hand", "torso",   Vector3(-1, 0, 0), Quaternion.identity())
+sg.apply_transform("r_hand", "torso",   Vector3( 1, 0, 0), Quaternion.identity())
+```
+
+### Accessing Nodes
+
+```python
+torso = sg["torso"]          # returns the Transform for "torso"
+print(torso.position)        # world-space position
+print(torso.local_position)  # position relative to parent
+```
+
+### Printing the Tree
+
+```python
+sg.print_graph()
+# __root__
+#  torso
+#   head
+#   l_hand
+#   r_hand
+```
+
+### Out-of-Order Insertion
+
+Nodes can be registered in any order. The graph inserts a zero-pose placeholder for unknown parents and patches it once the real definition arrives.
+
+```python
+# Register the child before the parent exists
+sg.apply_transform("wheel", "axle", Vector3(1, 0, 0), Quaternion.identity())
+
+# Now register the parent — the placeholder is promoted automatically
+sg.apply_transform("axle", root_name, Vector3(0, 0, 5), Quaternion.identity())
+
+print(sg["wheel"].position)   # Vector3(1.0, 0.0, 5.0) — correctly parented
+```
