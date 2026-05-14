@@ -94,6 +94,18 @@ class Transform:
 
         # Recompute world transform and propagate to children
         self.__propagate()
+
+    @property
+    def forward(self) -> Vector3:
+        return self.rotation * Vector3(0.0, 0.0, 1.0)
+
+    @property
+    def right(self) -> Vector3:
+        return self.rotation * Vector3(1.0, 0.0, 0.0)
+
+    @property
+    def up(self) -> Vector3:
+        return self.rotation * Vector3(0.0, 1.0, 0.0)
     
     def __repr__(self) -> str:
         return f"Transform({self.name!r}, {self.position!r}, {self.rotation!r})"
@@ -141,6 +153,12 @@ class Transform:
     
     def translate(self, translation: Vector3) -> None:
         self.position = (self.rotation * translation) + self.position
+
+    def look_at(self, target: Vector3, up: Vector3 | None = None) -> None:
+        direction = target - self.position
+        if direction.dot(direction) < 1e-15:
+            return
+        self.rotation = Quaternion.look_rotation(direction, up)
 
     def add_child(self, transform: Transform) -> None:
         if not isinstance(transform, Transform):

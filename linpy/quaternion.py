@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Iterator
 import numpy as np
-from .util import rcp, rsqrt, sincos, name_to_idx
+from .util import clamp, rcp, rsqrt, sincos, name_to_idx
 from .vector import Vector2, Vector3, Vector4, Scalar
 
 # Pre-computed sign sequences for each Euler rotation order
@@ -284,3 +284,44 @@ class Quaternion:
         euler[k] = rk
 
         return Vector3(euler).degree()
+
+    def slerp(self, other: Quaternion, t: float) -> Quaternion:
+        d = clamp(self.dot(other), -1.0, 1.0)
+        # If dot is negative, negate one to take the short path
+        if d < 0.0:
+            other = -other
+            d = -d
+        # Fall back to linear interpolation for nearly-identical orientations
+        if d > 0.9995:
+            result = Quaternion(self.values + t * (other.values - self.values))
+            result.normalize()
+            return result
+        theta = math.acos(d)
+        sin_theta = math.sin(theta)
+        a = math.sin((1.0 - t) * theta) / sin_theta
+        b = math.sin(t * theta) / sin_theta
+        return Quaternion(a * self.values + b * other.values)
+
+    @staticmethod
+    def look_rotation(forward: Vector3, up: Vector3 | None = None) -> Quaternion:
+        if up is None:
+            up = Vector3(0.0, 1.0, 0.0)
+        f = forward.normalized()
+        r = up.cross(f).normalized()
+        u = f.cross(r)
+        m = np.array([
+            [r.x, u.x, f.x],
+            [r.y, u.y, f.y],
+            [r.z, u.z, f.z],
+        ])
+        return Quaternion.from_matrix3x3(m)
+
+    def angle_between(self, other: Quaternion) -> float:
+        d = clamp(self.dot(other), -1.0, 1.0)
+        return math.degrees(2.0 * math.acos(abs(d)))
+
+    def to_matrix4x4(self) -> np.ndarray:
+        m3 = self.to_matrix3x3()
+        m4 = np.eye(4)
+        m4[:3, :3] = m3
+        return m4

@@ -230,3 +230,39 @@ class TestGetItem:
         sg = SceneGraph()
         with pytest.raises(KeyError):
             _ = sg["nonexistent"]
+
+
+# ============================================================
+# remove
+# ============================================================
+
+class TestRemove:
+    def test_remove_leaf(self):
+        sg = SceneGraph()
+        sg.apply_transform("A", SceneGraph.root_name, vec(1, 0, 0), IDENTITY)
+        sg.remove("A")
+        with pytest.raises(KeyError):
+            _ = sg["A"]
+        assert len(sg.root) == 0
+
+    def test_remove_reparents_children(self):
+        sg = SceneGraph()
+        sg.apply_transform("A", SceneGraph.root_name, vec(0, 0, 0), IDENTITY)
+        sg.apply_transform("B", "A", vec(1, 0, 0), IDENTITY)
+        sg.remove("A")
+        # B should now be a child of root
+        assert sg["B"].parent is sg.root
+
+    def test_remove_preserves_grandchildren(self):
+        sg = SceneGraph()
+        sg.apply_transform("A", SceneGraph.root_name, vec(0, 0, 0), IDENTITY)
+        sg.apply_transform("B", "A", vec(1, 0, 0), IDENTITY)
+        sg.apply_transform("C", "B", vec(2, 0, 0), IDENTITY)
+        sg.remove("A")
+        # B under root, C still under B
+        assert sg["B"].parent is sg.root
+        assert sg["C"].parent is sg["B"]
+
+    def test_remove_nonexistent_is_noop(self):
+        sg = SceneGraph()
+        sg.remove("nope")  # should not raise

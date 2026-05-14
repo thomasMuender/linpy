@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Iterator, Union
 import numpy as np
-from .util import rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS
+from .util import clamp, rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS
 
 # Type alias for scalar values accepted in arithmetic
 Scalar = Union[int, float]
@@ -199,6 +199,65 @@ class Vector:
     def radians(self) -> Vector:
         return type(self)([math.radians(v) for v in self.values])
     
+    def lerp(self, other: Vector, t: float) -> Vector:
+        if type(self) is not type(other):
+            raise TypeError(f"lerp() requires same type, got {type(other).__name__}")
+        return self + (other - self) * t
+
+    def distance(self, other: Vector) -> float:
+        return (self - other).magnitude()
+
+    def distance_squared(self, other: Vector) -> float:
+        diff = self - other
+        return diff.dot(diff)
+
+    def angle_between(self, other: Vector) -> float:
+        if type(self) is not type(other):
+            raise TypeError(f"angle_between() requires same type, got {type(other).__name__}")
+        d = self.dot(other)
+        m = self.magnitude() * other.magnitude()
+        if m < 1e-15:
+            return 0.0
+        return math.degrees(math.acos(clamp(d / m, -1.0, 1.0)))
+
+    def project(self, onto: Vector) -> Vector:
+        if type(self) is not type(onto):
+            raise TypeError(f"project() requires same type, got {type(onto).__name__}")
+        d = onto.dot(onto)
+        if d < 1e-15:
+            return type(self)(0.0)
+        return onto * (self.dot(onto) / d)
+
+    def reflect(self, normal: Vector) -> Vector:
+        if type(self) is not type(normal):
+            raise TypeError(f"reflect() requires same type, got {type(normal).__name__}")
+        return self - 2.0 * self.dot(normal) * normal
+
+    def clamp_magnitude(self, max_len: float) -> Vector:
+        sq = self.dot(self)
+        if sq > max_len * max_len:
+            return self.normalized() * max_len
+        return type(self)(self.values[:])
+
+    def abs(self) -> Vector:
+        return type(self)([abs(v) for v in self.values])
+
+    def min(self, other: Vector) -> Vector:
+        if type(self) is not type(other):
+            raise TypeError(f"min() requires same type, got {type(other).__name__}")
+        return type(self)([min(a, b) for a, b in zip(self.values, other.values)])
+
+    def max(self, other: Vector) -> Vector:
+        if type(self) is not type(other):
+            raise TypeError(f"max() requires same type, got {type(other).__name__}")
+        return type(self)([max(a, b) for a, b in zip(self.values, other.values)])
+
+    def floor(self) -> Vector:
+        return type(self)([math.floor(v) for v in self.values])
+
+    def ceil(self) -> Vector:
+        return type(self)([math.ceil(v) for v in self.values])
+
     def to_list(self) -> list[float]:
         return self.values[:]
 

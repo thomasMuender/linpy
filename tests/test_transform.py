@@ -626,3 +626,90 @@ class TestTransformEdgeCases:
         assert len(parent) == 2
         c1.parent = None
         assert len(parent) == 1
+
+
+# ============================================================
+# forward / right / up properties
+# ============================================================
+
+class TestDirectionProperties:
+    def test_identity_forward_is_z(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        assert_vec_equal(t.forward, [0, 0, 1])
+
+    def test_identity_right_is_x(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        assert_vec_equal(t.right, [1, 0, 0])
+
+    def test_identity_up_is_y(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        assert_vec_equal(t.up, [0, 1, 0])
+
+    def test_rotated_forward(self):
+        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        assert_vec_equal(t.forward, [1, 0, 0], tol=1e-5)
+
+    def test_rotated_right(self):
+        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        assert_vec_equal(t.right, [0, 0, -1], tol=1e-5)
+
+    def test_rotated_up_unchanged_by_y_rotation(self):
+        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        assert_vec_equal(t.up, [0, 1, 0], tol=1e-5)
+
+    def test_axes_are_orthonormal(self):
+        t = Transform(Vector3.zero(), Quaternion.from_rotation_x(37))
+        assert t.forward.dot(t.right) == pytest.approx(0.0, abs=1e-6)
+        assert t.forward.dot(t.up) == pytest.approx(0.0, abs=1e-6)
+        assert t.right.dot(t.up) == pytest.approx(0.0, abs=1e-6)
+        assert t.forward.magnitude() == pytest.approx(1.0, abs=1e-6)
+        assert t.right.magnitude() == pytest.approx(1.0, abs=1e-6)
+        assert t.up.magnitude() == pytest.approx(1.0, abs=1e-6)
+
+
+# ============================================================
+# look_at
+# ============================================================
+
+class TestLookAt:
+    def test_look_at_forward_z(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        t.look_at(Vector3(0, 0, 5))
+        assert_vec_equal(t.forward, [0, 0, 1], tol=1e-5)
+
+    def test_look_at_positive_x(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        t.look_at(Vector3(10, 0, 0))
+        assert_vec_equal(t.forward, [1, 0, 0], tol=1e-5)
+
+    def test_look_at_negative_z(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        t.look_at(Vector3(0, 0, -10))
+        assert_vec_equal(t.forward, [0, 0, -1], tol=1e-5)
+
+    def test_look_at_with_offset_position(self):
+        t = Transform(Vector3(5, 0, 0), Quaternion.identity())
+        t.look_at(Vector3(5, 0, 10))
+        assert_vec_equal(t.forward, [0, 0, 1], tol=1e-5)
+
+    def test_look_at_same_position_is_noop(self):
+        rot = Quaternion.from_rotation_x(45)
+        t = Transform(Vector3(1, 2, 3), rot)
+        t.look_at(Vector3(1, 2, 3))
+        # Rotation should remain unchanged
+        assert list(t.rotation) == pytest.approx(list(rot), abs=1e-7)
+
+    def test_look_at_custom_up(self):
+        t = Transform(Vector3.zero(), Quaternion.identity())
+        t.look_at(Vector3(1, 0, 0), Vector3(0, 0, 1))
+        assert_vec_equal(t.forward, [1, 0, 0], tol=1e-5)
+        assert_vec_equal(t.up, [0, 0, 1], tol=1e-5)
+
+    def test_look_at_propagates_to_children(self):
+        parent = Transform(Vector3.zero(), Quaternion.identity(), "parent")
+        child = Transform(Vector3(0, 0, 1), Quaternion.identity(), "child")
+        parent.add_child(child)
+        parent.look_at(Vector3(1, 0, 0))
+        # Child world position should have been updated
+        expected_child_pos = parent.rotation * Vector3(0, 0, 1) + parent.position
+        assert_vec_equal(child.position, list(expected_child_pos), tol=1e-5)

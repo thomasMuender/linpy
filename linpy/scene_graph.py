@@ -18,6 +18,10 @@ class SceneGraph():
         self.__root = Transform(Vector3.zero(), Quaternion.identity(), self.root_name)
 
 
+    def __getitem__(self, key):
+        return self.__transforms.__getitem__(key)
+
+
     @property
     def root(self) -> Transform:
         return self.__root
@@ -50,7 +54,14 @@ class SceneGraph():
     
     def print_graph(self) -> None:
         print_tree(0, self.__root)
-    
 
-    def __getitem__(self, key):
-        return self.__transforms.__getitem__(key)
+
+    def remove(self, transform_name: str) -> None:
+        if transform_name not in self.__transforms:
+            return
+        t = self.__transforms.pop(transform_name)
+        # Reparent children to the removed node's parent
+        parent = t.parent
+        for child in list(t):
+            child.parent = parent
+        t.parent = None

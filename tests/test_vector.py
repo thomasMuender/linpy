@@ -621,3 +621,245 @@ class TestVectorEdgeCases:
         b = Vector3(a)
         b.x = 99
         assert a.x == 1.0  # original must be unaffected
+
+
+# ============================================================
+# lerp
+# ============================================================
+
+class TestLerp:
+    def test_lerp_t0_returns_self(self):
+        a = Vector3(1, 2, 3)
+        b = Vector3(4, 5, 6)
+        assert_vec_equal(a.lerp(b, 0.0), [1, 2, 3])
+
+    def test_lerp_t1_returns_other(self):
+        a = Vector3(1, 2, 3)
+        b = Vector3(4, 5, 6)
+        assert_vec_equal(a.lerp(b, 1.0), [4, 5, 6])
+
+    def test_lerp_midpoint(self):
+        a = Vector3(0, 0, 0)
+        b = Vector3(10, 20, 30)
+        assert_vec_equal(a.lerp(b, 0.5), [5, 10, 15])
+
+    def test_lerp_vector2(self):
+        a = Vector2(0, 0)
+        b = Vector2(4, 8)
+        assert_vec_equal(a.lerp(b, 0.25), [1, 2])
+
+    def test_lerp_extrapolate(self):
+        a = Vector3(0, 0, 0)
+        b = Vector3(2, 2, 2)
+        assert_vec_equal(a.lerp(b, 2.0), [4, 4, 4])
+
+    def test_lerp_type_mismatch_raises(self):
+        with pytest.raises(TypeError):
+            Vector3(1, 2, 3).lerp(Vector2(1, 2), 0.5)
+
+
+# ============================================================
+# distance / distance_squared
+# ============================================================
+
+class TestDistance:
+    def test_distance_same_point(self):
+        a = Vector3(1, 2, 3)
+        assert a.distance(a) == pytest.approx(0.0)
+
+    def test_distance_known(self):
+        a = Vector3(0, 0, 0)
+        b = Vector3(3, 4, 0)
+        assert a.distance(b) == pytest.approx(5.0)
+
+    def test_distance_squared_known(self):
+        a = Vector3(0, 0, 0)
+        b = Vector3(3, 4, 0)
+        assert a.distance_squared(b) == pytest.approx(25.0)
+
+    def test_distance_is_symmetric(self):
+        a = Vector3(1, 2, 3)
+        b = Vector3(4, 5, 6)
+        assert a.distance(b) == pytest.approx(b.distance(a))
+
+    def test_distance_vector2(self):
+        a = Vector2(0, 0)
+        b = Vector2(3, 4)
+        assert a.distance(b) == pytest.approx(5.0)
+
+
+# ============================================================
+# angle_between
+# ============================================================
+
+class TestAngleBetween:
+    def test_parallel_vectors(self):
+        a = Vector3(1, 0, 0)
+        b = Vector3(2, 0, 0)
+        assert a.angle_between(b) == pytest.approx(0.0, abs=1e-6)
+
+    def test_perpendicular_vectors(self):
+        a = Vector3(1, 0, 0)
+        b = Vector3(0, 1, 0)
+        assert a.angle_between(b) == pytest.approx(90.0, abs=1e-6)
+
+    def test_opposite_vectors(self):
+        a = Vector3(1, 0, 0)
+        b = Vector3(-1, 0, 0)
+        assert a.angle_between(b) == pytest.approx(180.0, abs=1e-6)
+
+    def test_45_degrees(self):
+        a = Vector3(1, 0, 0)
+        b = Vector3(1, 1, 0)
+        assert a.angle_between(b) == pytest.approx(45.0, abs=1e-5)
+
+    def test_zero_vector_returns_zero(self):
+        a = Vector3(0, 0, 0)
+        b = Vector3(1, 0, 0)
+        assert a.angle_between(b) == pytest.approx(0.0)
+
+
+# ============================================================
+# project
+# ============================================================
+
+class TestProject:
+    def test_project_onto_axis(self):
+        v = Vector3(3, 4, 0)
+        onto = Vector3(1, 0, 0)
+        assert_vec_equal(v.project(onto), [3, 0, 0])
+
+    def test_project_onto_itself(self):
+        v = Vector3(3, 4, 5)
+        assert_vec_equal(v.project(v), [3, 4, 5])
+
+    def test_project_perpendicular(self):
+        v = Vector3(0, 5, 0)
+        onto = Vector3(1, 0, 0)
+        assert_vec_equal(v.project(onto), [0, 0, 0])
+
+    def test_project_onto_zero_returns_zero(self):
+        v = Vector3(1, 2, 3)
+        z = Vector3(0, 0, 0)
+        assert_vec_equal(v.project(z), [0, 0, 0])
+
+
+# ============================================================
+# reflect
+# ============================================================
+
+class TestReflect:
+    def test_reflect_off_horizontal(self):
+        # Incoming ray going down-right, normal pointing up
+        v = Vector3(1, -1, 0)
+        n = Vector3(0, 1, 0)
+        assert_vec_equal(v.reflect(n), [1, 1, 0])
+
+    def test_reflect_along_normal(self):
+        v = Vector3(0, -1, 0)
+        n = Vector3(0, 1, 0)
+        assert_vec_equal(v.reflect(n), [0, 1, 0])
+
+    def test_reflect_perpendicular_to_normal(self):
+        v = Vector3(1, 0, 0)
+        n = Vector3(0, 1, 0)
+        assert_vec_equal(v.reflect(n), [1, 0, 0])
+
+
+# ============================================================
+# clamp_magnitude
+# ============================================================
+
+class TestClampMagnitude:
+    def test_within_limit(self):
+        v = Vector3(1, 0, 0)
+        result = v.clamp_magnitude(5.0)
+        assert_vec_equal(result, [1, 0, 0])
+
+    def test_exceeds_limit(self):
+        v = Vector3(3, 4, 0)  # magnitude 5
+        result = v.clamp_magnitude(2.5)
+        assert result.magnitude() == pytest.approx(2.5, abs=1e-6)
+
+    def test_at_limit(self):
+        v = Vector3(3, 4, 0)  # magnitude 5
+        result = v.clamp_magnitude(5.0)
+        assert result.magnitude() == pytest.approx(5.0, abs=1e-6)
+
+    def test_clamp_returns_copy(self):
+        v = Vector3(1, 0, 0)
+        result = v.clamp_magnitude(5.0)
+        result.x = 99
+        assert v.x == 1.0
+
+
+# ============================================================
+# abs
+# ============================================================
+
+class TestAbs:
+    def test_positive_unchanged(self):
+        v = Vector3(1, 2, 3)
+        assert_vec_equal(v.abs(), [1, 2, 3])
+
+    def test_negative_made_positive(self):
+        v = Vector3(-1, -2, -3)
+        assert_vec_equal(v.abs(), [1, 2, 3])
+
+    def test_mixed(self):
+        v = Vector4(-1, 2, -3, 4)
+        assert_vec_equal(v.abs(), [1, 2, 3, 4])
+
+
+# ============================================================
+# min / max
+# ============================================================
+
+class TestMinMax:
+    def test_min_per_component(self):
+        a = Vector3(1, 5, 3)
+        b = Vector3(4, 2, 6)
+        assert_vec_equal(a.min(b), [1, 2, 3])
+
+    def test_max_per_component(self):
+        a = Vector3(1, 5, 3)
+        b = Vector3(4, 2, 6)
+        assert_vec_equal(a.max(b), [4, 5, 6])
+
+    def test_min_same_vector(self):
+        a = Vector3(1, 2, 3)
+        assert_vec_equal(a.min(a), [1, 2, 3])
+
+    def test_max_same_vector(self):
+        a = Vector3(1, 2, 3)
+        assert_vec_equal(a.max(a), [1, 2, 3])
+
+    def test_min_type_mismatch_raises(self):
+        with pytest.raises(TypeError):
+            Vector3(1, 2, 3).min(Vector2(1, 2))
+
+    def test_max_type_mismatch_raises(self):
+        with pytest.raises(TypeError):
+            Vector3(1, 2, 3).max(Vector2(1, 2))
+
+
+# ============================================================
+# floor / ceil
+# ============================================================
+
+class TestFloorCeil:
+    def test_floor(self):
+        v = Vector3(1.7, -1.3, 2.9)
+        assert_vec_equal(v.floor(), [1, -2, 2])
+
+    def test_ceil(self):
+        v = Vector3(1.7, -1.3, 2.9)
+        assert_vec_equal(v.ceil(), [2, -1, 3])
+
+    def test_floor_integers(self):
+        v = Vector3(1.0, 2.0, 3.0)
+        assert_vec_equal(v.floor(), [1, 2, 3])
+
+    def test_ceil_integers(self):
+        v = Vector3(1.0, 2.0, 3.0)
+        assert_vec_equal(v.ceil(), [1, 2, 3])
