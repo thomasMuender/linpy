@@ -298,7 +298,7 @@ class Transform:
         :rtype: Transform
         :raises ValueError: If *matrix* is not a 4x4 ndarray.
         """
-        if isinstance(matrix, np.ndarray) or matrix.shape != (4, 4):
+        if isinstance(matrix, np.ndarray) and matrix.shape == (4, 4):
             pos = Vector3(float(matrix[0, 3]), float(matrix[1, 3]), float(matrix[2, 3]))
             rot = Quaternion.from_matrix3x3(matrix[:3, :3])
             return Transform(pos, rot, name)

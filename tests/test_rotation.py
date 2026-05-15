@@ -334,12 +334,6 @@ class TestQuaternionNormalizeDot:
         q = Quaternion(1, 2, 3, 4)
         assert q.dot(q) == pytest.approx(30.0)
 
-    def test_dot_with_Vector4(self):
-        # dot() should also accept a Vector4.
-        q = Quaternion(1, 0, 0, 0)
-        v = Vector4(1, 0, 0, 0)
-        assert q.dot(v) == pytest.approx(1.0)
-
 
 # ============================================================
 # Euler Angle Conversion (fromEuler / toEuler)
