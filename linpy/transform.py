@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Iterator, overload
 import numpy as np
 from .vector import Vector3, Vector4
 from .quaternion import Quaternion
@@ -56,10 +56,12 @@ class Transform:
         :param value: The new local position.
         :raises TypeError: If *value* is not a Vector3.
         """
-        if not isinstance(value, Vector3):
-            raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
-        self.__local_position = value
-        self.__propagate()
+        if isinstance(value, Vector3):
+            self.__local_position = value
+            self.__propagate()
+            return
+        
+        raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
 
     @property
     def local_rotation(self) -> Quaternion:
@@ -77,10 +79,12 @@ class Transform:
         :param value: The new local rotation.
         :raises TypeError: If *value* is not a Quaternion.
         """
-        if not isinstance(value, Quaternion):
-            raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
-        self.__local_rotation = value
-        self.__propagate()
+        if isinstance(value, Quaternion):
+            self.__local_rotation = value
+            self.__propagate()
+            return
+
+        raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
 
     @property
     def position(self) -> Vector3:
@@ -98,10 +102,12 @@ class Transform:
         :param value: The new world position.
         :raises TypeError: If *value* is not a Vector3.
         """
-        if not isinstance(value, Vector3):
-            raise TypeError(f"position must be Vector3, got {type(value).__name__}")
-        self.__local_position = value if self.__parent is None else self.__parent.rotation.inverse() * (value - self.__parent.position)
-        self.__propagate()
+        if isinstance(value, Vector3):
+            self.__local_position = value if self.__parent is None else self.__parent.rotation.inverse() * (value - self.__parent.position)
+            self.__propagate()
+            return
+
+        raise TypeError(f"position must be Vector3, got {type(value).__name__}")
 
     @property
     def rotation(self) -> Quaternion:
@@ -119,10 +125,12 @@ class Transform:
         :param value: The new world rotation.
         :raises TypeError: If *value* is not a Quaternion.
         """
-        if not isinstance(value, Quaternion):
-            raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
-        self.__local_rotation = value if self.__parent is None else self.__parent.rotation.inverse() * value
-        self.__propagate()
+        if isinstance(value, Quaternion):
+            self.__local_rotation = value if self.__parent is None else self.__parent.rotation.inverse() * value
+            self.__propagate()
+            return
+
+        raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
 
     @property
     def parent(self) -> Transform | None:
@@ -202,6 +210,19 @@ class Transform:
         """
         return self.name + ": [Pos: " + str(self.position) + ", Rot: " + str(self.rotation.to_euler()) + "]"
 
+
+    @overload
+    def __mul__(self, other: Transform) -> Transform:
+        ...
+
+    @overload
+    def __mul__(self, other: Vector3) -> Vector3:
+        ...
+
+    @overload
+    def __mul__(self, other: Vector4) -> Vector4:
+        ...
+
     def __mul__(self, other: Transform | Vector3 | Vector4) -> Transform | Vector3 | Vector4:
         """Compose this transform with another object.
 
@@ -215,6 +236,7 @@ class Transform:
             return (self.rotation * other) + self.position
         elif isinstance(other, Vector4):
             return Vector4((self.rotation * other.xyz) + (self.position * other.w), other.w)
+        
         raise TypeError(f"Cannot multiply Transform by {type(other).__name__}")
     
     def __len__(self) -> int:
@@ -248,10 +270,11 @@ class Transform:
         :param newvalue: The Transform to place at the index.
         :raises TypeError: If *newvalue* is not a Transform.
         """
-        if not isinstance(newvalue, Transform):
-            raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
-        self.__children[key] = newvalue
-        self.__children[key].parent = self
+        if isinstance(newvalue, Transform):
+            self.__children[key] = newvalue
+            self.__children[key].parent = self
+
+        raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
 
     def to_matrix4x4(self) -> np.ndarray:
         """Convert this transform to a 4x4 homogeneous transformation matrix.
@@ -275,11 +298,12 @@ class Transform:
         :rtype: Transform
         :raises ValueError: If *matrix* is not a 4x4 ndarray.
         """
-        if not isinstance(matrix, np.ndarray) or matrix.shape != (4, 4):
-            raise ValueError("Input must be a 4x4 numpy array")
-        pos = Vector3(float(matrix[0, 3]), float(matrix[1, 3]), float(matrix[2, 3]))
-        rot = Quaternion.from_matrix3x3(matrix[:3, :3])
-        return Transform(pos, rot, name)
+        if isinstance(matrix, np.ndarray) or matrix.shape != (4, 4):
+            pos = Vector3(float(matrix[0, 3]), float(matrix[1, 3]), float(matrix[2, 3]))
+            rot = Quaternion.from_matrix3x3(matrix[:3, :3])
+            return Transform(pos, rot, name)
+        
+        raise ValueError("Input must be a 4x4 numpy array")
 
     def inverse(self) -> Transform:
         """Compute the inverse of this transform.

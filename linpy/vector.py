@@ -81,7 +81,7 @@ class Vector:
         :return: Iterator of float values.
         :rtype: Iterator[float]
         """
-        return iter(self.values)
+        return self.values.__iter__()
 
     def __eq__(self, other: object) -> bool:
         """Test equality with another vector of the same type.
@@ -90,9 +90,10 @@ class Vector:
         :return: True if all components are equal.
         :rtype: bool
         """
-        if type(self) is not type(other):
-            return NotImplemented
-        return self.values == other.values  # type: ignore[union-attr]
+        if type(self) is type(other):
+            return self.values == other.values  # type: ignore[union-attr]
+        
+        return False
 
     def __ne__(self, other: object) -> bool:
         """Test inequality with another vector of the same type.
@@ -101,9 +102,10 @@ class Vector:
         :return: True if any component differs.
         :rtype: bool
         """
-        if type(self) is not type(other):
-            return NotImplemented
-        return self.values != other.values  # type: ignore[union-attr]
+        if type(self) is type(other):
+            return self.values != other.values  # type: ignore[union-attr]
+        
+        return False
 
     def __neg__(self) -> Self:
         """Negate all components.
@@ -123,6 +125,7 @@ class Vector:
             return type(self)([a + b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a + other for a in self.values])
+        
         raise TypeError(f"Cannot add {type(other).__name__} to {type(self).__name__}")
 
     def __radd__(self, other: Scalar) -> Self:
@@ -133,7 +136,8 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return self + other
-        return NotImplemented  # type: ignore[return-value]
+        
+        raise TypeError(f"Cannot add {type(other).__name__} to {type(self).__name__}")
 
     def __sub__(self, other: Self | Scalar) -> Self:
         """Subtract a vector or scalar from this vector component-wise.
@@ -146,6 +150,7 @@ class Vector:
             return type(self)([a - b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a - other for a in self.values])
+        
         raise TypeError(f"Cannot subtract {type(other).__name__} from {type(self).__name__}")
 
     def __rsub__(self, other: Scalar) -> Self:
@@ -156,7 +161,8 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return type(self)([other - a for a in self.values])
-        return NotImplemented  # type: ignore[return-value]
+        
+        raise TypeError(f"Cannot subtract {type(other).__name__} from {type(self).__name__}")
 
     def __mul__(self, other: Self | Scalar) -> Self:
         """Multiply this vector by another vector (component-wise) or a scalar.
@@ -169,6 +175,7 @@ class Vector:
             return type(self)([a * b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a * other for a in self.values])
+        
         raise TypeError(f"Cannot multiply {type(self).__name__} by {type(other).__name__}")
 
     def __rmul__(self, other: Scalar) -> Self:
@@ -179,7 +186,8 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return self * other
-        return NotImplemented  # type: ignore[return-value]
+        
+        raise TypeError(f"Cannot multiply {type(self).__name__} by {type(other).__name__}")
 
     def __truediv__(self, other: Self | Scalar) -> Self:
         """Divide this vector by another vector (component-wise) or a scalar.
@@ -192,6 +200,7 @@ class Vector:
             return type(self)([a / b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a / other for a in self.values])
+        
         raise TypeError(f"Cannot divide {type(self).__name__} by {type(other).__name__}")
 
     def __rtruediv__(self, other: Scalar) -> Self:
@@ -202,7 +211,8 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return type(self)([other / a for a in self.values])
-        return NotImplemented  # type: ignore[return-value]
+        
+        raise TypeError(f"Cannot divide {type(self).__name__} by {type(other).__name__}")
 
     def __getattr__(self, name: str) -> float | Vector2 | Vector3 | Vector4:
         """Access components by name via swizzle notation (e.g. ``v.xy``, ``v.zyx``).
@@ -228,6 +238,7 @@ class Vector:
             elif len(name) == 4:
                 return Vector4(vals)
             raise IndexError(f"Swizzle too long: '{name}'")
+        
         raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
     def __getitem__(self, items: int | slice) -> float | Vector2 | Vector3 | Vector4:
@@ -246,6 +257,7 @@ class Vector:
             return Vector3(sliced)
         elif len(sliced) == 4:
             return Vector4(sliced)
+        
         raise ValueError(f"Slice produced {len(sliced)} elements; expected 2, 3, or 4")
 
     def __setattr__(self, name: str, value: Scalar | Vector2 | Vector3 | Vector4 | list[float] | tuple[float, ...]) -> None:
@@ -255,23 +267,22 @@ class Vector:
         :param value: A scalar, vector, list, or tuple of values.
         :raises IndexError: If assignment is invalid for the given name.
         """
-        done = False
         if name in __class__.__slots__:
             super().__setattr__(name, value)
-            done = True
+            return
         elif (all(c in _VALID_COMPONENTS for c in name)
               and highest_idx(name) < self.num
               and has_unique_characters(name)):
             if isinstance(value, (int, float)):
                 for n in name:
                     self.values[name_to_idx(n)] = float(value)
-                done = True
+                return
             elif isinstance(value, (list, tuple, Vector2, Vector3, Vector4)) and 1 < len(name) <= self.num and len(name) == len(value):
                 for i, n in enumerate(name):
-                    self.values[name_to_idx(n)] = float(value[i])
-                done = True
-        if not done:
-            raise IndexError(f"Cannot set '{name}' on {type(self).__name__}")
+                    self.values[name_to_idx(n)] = float(value[i]) # type: ignore
+                return
+
+        raise IndexError(f"Cannot set '{name}' on {type(self).__name__}")
 
     def __setitem__(self, key: int | slice, newvalue: Scalar) -> None:
         """Set component value(s) by index or slice.
@@ -280,7 +291,7 @@ class Vector:
         :param newvalue: The new scalar value to assign.
         """
         if isinstance(newvalue, (int, float)):
-            self.values[key] = float(newvalue)
+            self.values[key] = float(newvalue) # type: ignore
         else:
             self.values[key] = newvalue
     
@@ -292,9 +303,10 @@ class Vector:
         :rtype: float
         :raises TypeError: If *other* is not the same vector type.
         """
-        if type(self) is not type(other):
-            raise TypeError(f"dot() requires same type, got {type(other).__name__}")
-        return sum(a * b for a, b in zip(self.values, other.values))
+        if type(self) is type(other):
+            return sum(a * b for a, b in zip(self.values, other.values))
+        
+        raise TypeError(f"dot() requires same type, got {type(other).__name__}")
     
     def magnitude(self) -> float:
         """Compute the Euclidean length of the vector.
@@ -365,9 +377,10 @@ class Vector:
         :return: The interpolated vector.
         :raises TypeError: If *other* is not the same vector type.
         """
-        if type(self) is not type(other):
-            raise TypeError(f"lerp() requires same type, got {type(other).__name__}")
-        return self + (other - self) * t
+        if type(self) is type(other):
+            return self + (other - self) * t
+        
+        raise TypeError(f"lerp() requires same type, got {type(other).__name__}")
 
     def distance(self, other: Self) -> float:
         """Compute the Euclidean distance to another vector.
@@ -396,13 +409,14 @@ class Vector:
         :rtype: float
         :raises TypeError: If *other* is not the same vector type.
         """
-        if type(self) is not type(other):
-            raise TypeError(f"angle_between() requires same type, got {type(other).__name__}")
-        d = self.dot(other)
-        m = self.magnitude() * other.magnitude()
-        if m < 1e-15:
-            return 0.0
-        return math.degrees(math.acos(clamp(d / m, -1.0, 1.0)))
+        if type(self) is type(other):     
+            d = self.dot(other)
+            m = self.magnitude() * other.magnitude()
+            if m < 1e-15:
+                return 0.0
+            return math.degrees(math.acos(clamp(d / m, -1.0, 1.0)))
+        
+        raise TypeError(f"angle_between() requires same type, got {type(other).__name__}")
 
     def project(self, onto: Self) -> Self:
         """Project this vector onto another vector.
@@ -411,12 +425,13 @@ class Vector:
         :return: The projected vector.
         :raises TypeError: If *onto* is not the same vector type.
         """
-        if type(self) is not type(onto):
-            raise TypeError(f"project() requires same type, got {type(onto).__name__}")
-        d = onto.dot(onto)
-        if d < 1e-15:
-            return type(self)(0.0)
-        return onto * (self.dot(onto) / d)
+        if type(self) is type(onto):
+            d = onto.dot(onto)
+            if d < 1e-15:
+                return type(self)(0.0)
+            return onto * (self.dot(onto) / d)
+    
+        raise TypeError(f"project() requires same type, got {type(onto).__name__}")
 
     def reflect(self, normal: Self) -> Self:
         """Reflect this vector about a normal.
@@ -425,9 +440,10 @@ class Vector:
         :return: The reflected vector.
         :raises TypeError: If *normal* is not the same vector type.
         """
-        if type(self) is not type(normal):
-            raise TypeError(f"reflect() requires same type, got {type(normal).__name__}")
-        return self - 2.0 * self.dot(normal) * normal
+        if type(self) is type(normal):
+            return self - 2.0 * self.dot(normal) * normal
+        
+        raise TypeError(f"reflect() requires same type, got {type(normal).__name__}")
 
     def clamp_magnitude(self, max_len: float) -> Self:
         """Clamp the vector's magnitude to a maximum length.
@@ -454,9 +470,10 @@ class Vector:
         :return: A vector with the minimum of each pair of components.
         :raises TypeError: If *other* is not the same vector type.
         """
-        if type(self) is not type(other):
-            raise TypeError(f"min() requires same type, got {type(other).__name__}")
-        return type(self)([min(a, b) for a, b in zip(self.values, other.values)])
+        if type(self) is type(other):
+            return type(self)([min(a, b) for a, b in zip(self.values, other.values)])
+        
+        raise TypeError(f"min() requires same type, got {type(other).__name__}")
 
     def max(self, other: Self) -> Self:
         """Return the component-wise maximum of this vector and another.
@@ -465,9 +482,10 @@ class Vector:
         :return: A vector with the maximum of each pair of components.
         :raises TypeError: If *other* is not the same vector type.
         """
-        if type(self) is not type(other):
-            raise TypeError(f"max() requires same type, got {type(other).__name__}")
-        return type(self)([max(a, b) for a, b in zip(self.values, other.values)])
+        if type(self) is type(other):
+            return type(self)([max(a, b) for a, b in zip(self.values, other.values)])
+        
+        raise TypeError(f"max() requires same type, got {type(other).__name__}")
 
     def floor(self) -> Self:
         """Return a vector with each component floored.
@@ -597,7 +615,7 @@ class Vector3(Vector):
         :return: The cross product vector.
         :rtype: Vector3
         """
-        return (self * other.yzx - self.yzx * other).yzx
+        return (self * other.yzx - self.yzx * other).yzx # type: ignore
 
 
 class Vector4(Vector):

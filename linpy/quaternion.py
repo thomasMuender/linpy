@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Iterator
+from typing import Iterator, overload
 import numpy as np
 from .util import clamp, rcp, rsqrt, sincos, name_to_idx
 from .vector import Vector2, Vector3, Vector4, Scalar
@@ -88,9 +88,10 @@ class Quaternion:
         :return: True if all components are equal.
         :rtype: bool
         """
-        if not isinstance(other, Quaternion):
-            return NotImplemented
-        return self.values == other.values
+        if isinstance(other, Quaternion):
+            return self.values == other.values
+        
+        return False
 
     def __ne__(self, other: object) -> bool:
         """Test inequality with another quaternion.
@@ -99,9 +100,10 @@ class Quaternion:
         :return: True if any component differs.
         :rtype: bool
         """
-        if not isinstance(other, Quaternion):
-            return NotImplemented
-        return self.values != other.values
+        if isinstance(other, Quaternion):
+            return self.values != other.values
+        
+        return False
 
     def __neg__(self) -> Quaternion:
         """Negate all components of the quaternion.
@@ -110,6 +112,18 @@ class Quaternion:
         :rtype: Quaternion
         """
         return Quaternion(-self.values)
+    
+    @overload
+    def __mul__(self, other: Quaternion) -> Quaternion:
+        ...
+
+    @overload
+    def __mul__(self, other: Vector3) -> Vector3:
+        ...
+
+    @overload
+    def __mul__(self, other: Scalar) -> Quaternion:
+        ...
 
     def __mul__(self, other: Quaternion | Vector3 | Scalar) -> Quaternion | Vector3:
         """Multiply this quaternion by another quaternion, a Vector3, or a scalar.
@@ -134,6 +148,7 @@ class Quaternion:
             return other + self.w * t + self.xyz.cross(t)
         elif isinstance(other, (float, int)):
             return Quaternion(self.values * other)
+        
         raise TypeError(f"Cannot multiply Quaternion by {type(other).__name__}")
 
     def __rmul__(self, other: Scalar) -> Quaternion:
@@ -145,7 +160,8 @@ class Quaternion:
         """
         if isinstance(other, (float, int)):
             return Quaternion(self.values * other)
-        return NotImplemented  # type: ignore[return-value]
+        
+        raise TypeError(f"Cannot multiply Quaternion by {type(other).__name__}")
 
     def __getattr__(self, name: str) -> float | Vector2 | Vector3 | Vector4:
         """Access quaternion components via swizzle notation.
@@ -312,7 +328,7 @@ class Quaternion:
             + s.yxxy * s.zzyz * Vector4(c.xyz, s.x) * seq
         )
 
-    def dot(self, other: Quaternion | Vector4) -> float:
+    def dot(self, other: Quaternion) -> float:
         """Compute the dot product with another quaternion or Vector4.
 
         :param other: A Quaternion or Vector4.
@@ -322,9 +338,8 @@ class Quaternion:
         """
         if isinstance(other, Quaternion):
             return self.values.dot(other.values)
-        elif isinstance(other, Vector4):
-            return self.values.dot(other)
-        raise TypeError(f"dot() expects Quaternion or Vec4, got {type(other).__name__}")
+        
+        raise TypeError(f"dot() expects Quaternion, got {type(other).__name__}")
 
     def normalize(self) -> None:
         """Normalize this quaternion in place to unit length."""
