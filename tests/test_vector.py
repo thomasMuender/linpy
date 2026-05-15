@@ -414,10 +414,11 @@ class TestMagnitudeAndNormalization:
         n = Vector3(0, 1, 0).normalized()
         assert_vec_equal(n, [0, 1, 0])
 
-    def test_normalize_zero_vector_raises(self):
-        # Normalizing a zero vector requires dividing by zero → ZeroDivisionError.
-        with pytest.raises(ZeroDivisionError):
-            Vector3(0, 0, 0).normalize()
+    def test_normalize_zero_vector_is_safe(self):
+        # Normalizing a zero vector should leave it unchanged (no division by zero).
+        v = Vector3(0, 0, 0)
+        v.normalize()
+        assert_vec_equal(v, [0, 0, 0])
 
 
 # ============================================================

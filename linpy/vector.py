@@ -306,15 +306,21 @@ class Vector:
 
     def normalize(self) -> None:
         """Normalize this vector in place to unit length."""
-        scale = rsqrt(self.dot(self))
+        d = self.dot(self)
+        if d < 1e-30:
+            return
+        scale = rsqrt(d)
         self.values = [a * scale for a in self.values]
     
     def normalized(self) -> Self:
         """Return a unit-length copy of this vector.
 
-        :return: The normalized vector.
+        :return: The normalized vector, or a zero vector if magnitude is near zero.
         """
-        return rsqrt(self.dot(self)) * self
+        d = self.dot(self)
+        if d < 1e-30:
+            return type(self)(0.0)
+        return rsqrt(d) * self
     
     def inverse(self) -> Self:
         """Return the additive inverse (negation) of this vector.
