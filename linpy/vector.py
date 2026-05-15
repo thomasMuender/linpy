@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Iterator, Union
+from typing import Iterator, Union, Self
 import numpy as np
 from .util import clamp, rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS
 
@@ -9,9 +9,20 @@ from .util import clamp, rsqrt, name_to_idx, has_unique_characters, highest_idx,
 Scalar = Union[int, float]
 
 class Vector:
+    """Abstract base class for fixed-size numeric vectors.
+
+    Do not instantiate directly; use :class:`Vector2`, :class:`Vector3`,
+    or :class:`Vector4`.
+    """
     __slots__ = 'num', 'values'
 
     def __init__(self, *args: Scalar | list[Scalar] | tuple[Scalar, ...] | np.ndarray | Vector) -> None:
+        """Initialize a vector from scalar, list, tuple, ndarray, or other vector args.
+
+        :param args: Components to construct the vector from.
+        :raises ValueError: If instantiated directly instead of via a subclass.
+        :raises AttributeError: If the wrong number of components is provided.
+        """
         if type(self) not in (Vector2, Vector3, Vector4):
             raise ValueError("Cannot instantiate Vector directly; use Vector2, Vector3, or Vector4")
 
@@ -40,80 +51,167 @@ class Vector:
             )
         
     def __repr__(self) -> str:
+        """Return a string representation that can recreate the vector.
+
+        :return: Repr string in the form ``VectorN(x, y, ...)``.
+        :rtype: str
+        """
         args = ', '.join(repr(v) for v in self.values)
         return f"{type(self).__name__}({args})"
 
     def __str__(self) -> str:
+        """Return a human-readable bracketed string of component values.
+
+        :return: String in the form ``[x, y, ...]``.
+        :rtype: str
+        """
         return '[' + ', '.join(str(v) for v in self.values) + ']'
     
     def __len__(self) -> int:
+        """Return the number of components.
+
+        :return: Component count.
+        :rtype: int
+        """
         return self.num
 
     def __iter__(self) -> Iterator[float]:
+        """Iterate over the component values.
+
+        :return: Iterator of float values.
+        :rtype: Iterator[float]
+        """
         return iter(self.values)
 
     def __eq__(self, other: object) -> bool:
+        """Test equality with another vector of the same type.
+
+        :param other: The vector to compare.
+        :return: True if all components are equal.
+        :rtype: bool
+        """
         if type(self) is not type(other):
             return NotImplemented
         return self.values == other.values  # type: ignore[union-attr]
 
     def __ne__(self, other: object) -> bool:
+        """Test inequality with another vector of the same type.
+
+        :param other: The vector to compare.
+        :return: True if any component differs.
+        :rtype: bool
+        """
         if type(self) is not type(other):
             return NotImplemented
         return self.values != other.values  # type: ignore[union-attr]
 
-    def __neg__(self) -> Vector:
+    def __neg__(self) -> Self:
+        """Negate all components.
+
+        :return: A new vector with all components negated.
+        """
         return type(self)([-v for v in self.values])
 
-    def __add__(self, other: Vector | Scalar) -> Vector:
+    def __add__(self, other: Self | Scalar) -> Self:
+        """Add a vector or scalar to this vector component-wise.
+
+        :param other: A vector of the same type or a scalar.
+        :return: The resulting vector.
+        :raises TypeError: If *other* is an incompatible type.
+        """
         if type(self) is type(other):
             return type(self)([a + b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a + other for a in self.values])
         raise TypeError(f"Cannot add {type(other).__name__} to {type(self).__name__}")
 
-    def __radd__(self, other: Scalar) -> Vector:
+    def __radd__(self, other: Scalar) -> Self:
+        """Support scalar + vector addition.
+
+        :param other: A scalar value.
+        :return: The resulting vector.
+        """
         if isinstance(other, (float, int)):
             return self + other
         return NotImplemented  # type: ignore[return-value]
 
-    def __sub__(self, other: Vector | Scalar) -> Vector:
+    def __sub__(self, other: Self | Scalar) -> Self:
+        """Subtract a vector or scalar from this vector component-wise.
+
+        :param other: A vector of the same type or a scalar.
+        :return: The resulting vector.
+        :raises TypeError: If *other* is an incompatible type.
+        """
         if type(self) is type(other):
             return type(self)([a - b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a - other for a in self.values])
         raise TypeError(f"Cannot subtract {type(other).__name__} from {type(self).__name__}")
 
-    def __rsub__(self, other: Scalar) -> Vector:
+    def __rsub__(self, other: Scalar) -> Self:
+        """Support scalar - vector subtraction.
+
+        :param other: A scalar value.
+        :return: The resulting vector.
+        """
         if isinstance(other, (float, int)):
             return type(self)([other - a for a in self.values])
         return NotImplemented  # type: ignore[return-value]
 
-    def __mul__(self, other: Vector | Scalar) -> Vector:
+    def __mul__(self, other: Self | Scalar) -> Self:
+        """Multiply this vector by another vector (component-wise) or a scalar.
+
+        :param other: A vector of the same type or a scalar.
+        :return: The resulting vector.
+        :raises TypeError: If *other* is an incompatible type.
+        """
         if type(self) is type(other):
             return type(self)([a * b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a * other for a in self.values])
         raise TypeError(f"Cannot multiply {type(self).__name__} by {type(other).__name__}")
 
-    def __rmul__(self, other: Scalar) -> Vector:
+    def __rmul__(self, other: Scalar) -> Self:
+        """Support scalar * vector multiplication.
+
+        :param other: A scalar value.
+        :return: The resulting vector.
+        """
         if isinstance(other, (float, int)):
             return self * other
         return NotImplemented  # type: ignore[return-value]
 
-    def __truediv__(self, other: Vector | Scalar) -> Vector:
+    def __truediv__(self, other: Self | Scalar) -> Self:
+        """Divide this vector by another vector (component-wise) or a scalar.
+
+        :param other: A vector of the same type or a scalar.
+        :return: The resulting vector.
+        :raises TypeError: If *other* is an incompatible type.
+        """
         if type(self) is type(other):
             return type(self)([a / b for a, b in zip(self.values, other.values)])  # type: ignore[union-attr]
         elif isinstance(other, (float, int)):
             return type(self)([a / other for a in self.values])
         raise TypeError(f"Cannot divide {type(self).__name__} by {type(other).__name__}")
 
-    def __rtruediv__(self, other: Scalar) -> Vector:
+    def __rtruediv__(self, other: Scalar) -> Self:
+        """Support scalar / vector division.
+
+        :param other: A scalar value.
+        :return: The resulting vector.
+        """
         if isinstance(other, (float, int)):
             return type(self)([other / a for a in self.values])
         return NotImplemented  # type: ignore[return-value]
 
-    def __getattr__(self, name: str) -> float | Vector:
+    def __getattr__(self, name: str) -> float | Vector2 | Vector3 | Vector4:
+        """Access components by name via swizzle notation (e.g. ``v.xy``, ``v.zyx``).
+
+        :param name: One or more component characters (x, y, z, w).
+        :return: A float for single components, or a new vector for swizzles.
+        :raises IndexError: If any component is out of range or swizzle is too long.
+        :raises AttributeError: If *name* contains invalid characters.
+        """
         if all(c in _VALID_COMPONENTS for c in name):
             indices = [name_to_idx(n) for n in name]
             if any(i >= self.num for i in indices):
@@ -132,7 +230,13 @@ class Vector:
             raise IndexError(f"Swizzle too long: '{name}'")
         raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
-    def __getitem__(self, items: int | slice) -> float | Vector:
+    def __getitem__(self, items: int | slice) -> float | Vector2 | Vector3 | Vector4:
+        """Index or slice the vector components.
+
+        :param items: An integer index or slice.
+        :return: A float for single index, or a new vector for slices.
+        :raises ValueError: If slice produces an unsupported number of elements.
+        """
         sliced = self.values[items]
         if isinstance(sliced, (int, float)):
             return sliced
@@ -144,7 +248,13 @@ class Vector:
             return Vector4(sliced)
         raise ValueError(f"Slice produced {len(sliced)} elements; expected 2, 3, or 4")
 
-    def __setattr__(self, name: str, value: Scalar | Vector | list[float] | tuple[float, ...]) -> None:
+    def __setattr__(self, name: str, value: Scalar | Vector2 | Vector3 | Vector4 | list[float] | tuple[float, ...]) -> None:
+        """Set component values by name using swizzle notation.
+
+        :param name: One or more component characters to set.
+        :param value: A scalar, vector, list, or tuple of values.
+        :raises IndexError: If assignment is invalid for the given name.
+        """
         done = False
         if name in __class__.__slots__:
             super().__setattr__(name, value)
@@ -164,54 +274,122 @@ class Vector:
             raise IndexError(f"Cannot set '{name}' on {type(self).__name__}")
 
     def __setitem__(self, key: int | slice, newvalue: Scalar) -> None:
+        """Set component value(s) by index or slice.
+
+        :param key: An integer index or slice.
+        :param newvalue: The new scalar value to assign.
+        """
         if isinstance(newvalue, (int, float)):
             self.values[key] = float(newvalue)
         else:
             self.values[key] = newvalue
     
-    def dot(self, other: Vector) -> float:
+    def dot(self, other: Self) -> float:
+        """Compute the dot product with another vector.
+
+        :param other: A vector of the same type.
+        :return: The dot product.
+        :rtype: float
+        :raises TypeError: If *other* is not the same vector type.
+        """
         if type(self) is not type(other):
             raise TypeError(f"dot() requires same type, got {type(other).__name__}")
         return sum(a * b for a, b in zip(self.values, other.values))
     
     def magnitude(self) -> float:
+        """Compute the Euclidean length of the vector.
+
+        :return: The magnitude.
+        :rtype: float
+        """
         return math.sqrt(self.dot(self))
 
     def normalize(self) -> None:
+        """Normalize this vector in place to unit length."""
         scale = rsqrt(self.dot(self))
         self.values = [a * scale for a in self.values]
     
-    def normalized(self) -> Vector:
+    def normalized(self) -> Self:
+        """Return a unit-length copy of this vector.
+
+        :return: The normalized vector.
+        """
         return rsqrt(self.dot(self)) * self
     
-    def inverse(self) -> Vector:
+    def inverse(self) -> Self:
+        """Return the additive inverse (negation) of this vector.
+
+        :return: The negated vector.
+        """
         return -self
     
-    def sin(self) -> Vector:
+    def sin(self) -> Self:
+        """Apply sine to each component (in radians).
+
+        :return: A new vector with sine of each component.
+        """
         return type(self)([math.sin(v) for v in self.values])
     
-    def cos(self) -> Vector:
+    def cos(self) -> Self:
+        """Apply cosine to each component (in radians).
+
+        :return: A new vector with cosine of each component.
+        """
         return type(self)([math.cos(v) for v in self.values])
     
-    def degree(self) -> Vector:
+    def degree(self) -> Self:
+        """Convert each component from radians to degrees.
+
+        :return: A new vector with values in degrees.
+        """
         return type(self)([math.degrees(v) for v in self.values])
     
-    def radians(self) -> Vector:
+    def radians(self) -> Self:
+        """Convert each component from degrees to radians.
+
+        :return: A new vector with values in radians.
+        """
         return type(self)([math.radians(v) for v in self.values])
     
-    def lerp(self, other: Vector, t: float) -> Vector:
+    def lerp(self, other: Self, t: float) -> Self:
+        """Linearly interpolate between this vector and another.
+
+        :param other: The target vector.
+        :param t: Interpolation factor (0 = self, 1 = other).
+        :return: The interpolated vector.
+        :raises TypeError: If *other* is not the same vector type.
+        """
         if type(self) is not type(other):
             raise TypeError(f"lerp() requires same type, got {type(other).__name__}")
         return self + (other - self) * t
 
-    def distance(self, other: Vector) -> float:
+    def distance(self, other: Self) -> float:
+        """Compute the Euclidean distance to another vector.
+
+        :param other: The other vector.
+        :return: The distance.
+        :rtype: float
+        """
         return (self - other).magnitude()
 
-    def distance_squared(self, other: Vector) -> float:
+    def distance_squared(self, other: Self) -> float:
+        """Compute the squared Euclidean distance to another vector.
+
+        :param other: The other vector.
+        :return: The squared distance.
+        :rtype: float
+        """
         diff = self - other
         return diff.dot(diff)
 
-    def angle_between(self, other: Vector) -> float:
+    def angle_between(self, other: Self) -> float:
+        """Compute the angle in degrees between this vector and another.
+
+        :param other: The other vector.
+        :return: The angle in degrees.
+        :rtype: float
+        :raises TypeError: If *other* is not the same vector type.
+        """
         if type(self) is not type(other):
             raise TypeError(f"angle_between() requires same type, got {type(other).__name__}")
         d = self.dot(other)
@@ -220,7 +398,13 @@ class Vector:
             return 0.0
         return math.degrees(math.acos(clamp(d / m, -1.0, 1.0)))
 
-    def project(self, onto: Vector) -> Vector:
+    def project(self, onto: Self) -> Self:
+        """Project this vector onto another vector.
+
+        :param onto: The vector to project onto.
+        :return: The projected vector.
+        :raises TypeError: If *onto* is not the same vector type.
+        """
         if type(self) is not type(onto):
             raise TypeError(f"project() requires same type, got {type(onto).__name__}")
         d = onto.dot(onto)
@@ -228,113 +412,242 @@ class Vector:
             return type(self)(0.0)
         return onto * (self.dot(onto) / d)
 
-    def reflect(self, normal: Vector) -> Vector:
+    def reflect(self, normal: Self) -> Self:
+        """Reflect this vector about a normal.
+
+        :param normal: The surface normal to reflect about.
+        :return: The reflected vector.
+        :raises TypeError: If *normal* is not the same vector type.
+        """
         if type(self) is not type(normal):
             raise TypeError(f"reflect() requires same type, got {type(normal).__name__}")
         return self - 2.0 * self.dot(normal) * normal
 
-    def clamp_magnitude(self, max_len: float) -> Vector:
+    def clamp_magnitude(self, max_len: float) -> Self:
+        """Clamp the vector's magnitude to a maximum length.
+
+        :param max_len: The maximum allowed magnitude.
+        :return: The clamped vector.
+        """
         sq = self.dot(self)
         if sq > max_len * max_len:
             return self.normalized() * max_len
         return type(self)(self.values[:])
 
-    def abs(self) -> Vector:
+    def abs(self) -> Self:
+        """Return a vector with the absolute value of each component.
+
+        :return: The component-wise absolute vector.
+        """
         return type(self)([abs(v) for v in self.values])
 
-    def min(self, other: Vector) -> Vector:
+    def min(self, other: Self) -> Self:
+        """Return the component-wise minimum of this vector and another.
+
+        :param other: The other vector.
+        :return: A vector with the minimum of each pair of components.
+        :raises TypeError: If *other* is not the same vector type.
+        """
         if type(self) is not type(other):
             raise TypeError(f"min() requires same type, got {type(other).__name__}")
         return type(self)([min(a, b) for a, b in zip(self.values, other.values)])
 
-    def max(self, other: Vector) -> Vector:
+    def max(self, other: Self) -> Self:
+        """Return the component-wise maximum of this vector and another.
+
+        :param other: The other vector.
+        :return: A vector with the maximum of each pair of components.
+        :raises TypeError: If *other* is not the same vector type.
+        """
         if type(self) is not type(other):
             raise TypeError(f"max() requires same type, got {type(other).__name__}")
         return type(self)([max(a, b) for a, b in zip(self.values, other.values)])
 
-    def floor(self) -> Vector:
+    def floor(self) -> Self:
+        """Return a vector with each component floored.
+
+        :return: The floored vector.
+        """
         return type(self)([math.floor(v) for v in self.values])
 
-    def ceil(self) -> Vector:
+    def ceil(self):
+        """Return a vector with each component ceiled.
+
+        :return: The ceiled vector.
+        """
         return type(self)([math.ceil(v) for v in self.values])
 
     def to_list(self) -> list[float]:
+        """Convert the vector to a list of floats.
+
+        :return: A list copy of the component values.
+        :rtype: list[float]
+        """
         return self.values[:]
 
     def to_numpy(self) -> np.ndarray:
+        """Convert the vector to a NumPy array.
+
+        :return: A 1-D NumPy array of the component values.
+        :rtype: numpy.ndarray
+        """
         return np.array(self.values)
 
 
 class Vector2(Vector):
+    """A 2-component floating-point vector."""
     __slots__ = ()
 
     @staticmethod
     def zero() -> Vector2:
+        """Return the zero vector (0, 0).
+
+        :return: A zero Vector2.
+        :rtype: Vector2
+        """
         return Vector2(0.0, 0.0)
     
     @staticmethod
     def one() -> Vector2:
+        """Return the one vector (1, 1).
+
+        :return: A unit-value Vector2.
+        :rtype: Vector2
+        """
         return Vector2(1.0, 1.0)
     
     @staticmethod
     def x_one() -> Vector2:
+        """Return the unit X vector (1, 0).
+
+        :return: A Vector2 pointing along the X axis.
+        :rtype: Vector2
+        """
         return Vector2(1.0, 0.0)
     
     @staticmethod
     def y_one() -> Vector2:
+        """Return the unit Y vector (0, 1).
+
+        :return: A Vector2 pointing along the Y axis.
+        :rtype: Vector2
+        """
         return Vector2(0.0, 1.0)
 
 
 class Vector3(Vector):
+    """A 3-component floating-point vector."""
     __slots__ = ()
 
     @staticmethod
     def zero() -> Vector3:
+        """Return the zero vector (0, 0, 0).
+
+        :return: A zero Vector3.
+        :rtype: Vector3
+        """
         return Vector3(0.0, 0.0, 0.0)
     
     @staticmethod
     def one() -> Vector3:
+        """Return the one vector (1, 1, 1).
+
+        :return: A unit-value Vector3.
+        :rtype: Vector3
+        """
         return Vector3(1.0, 1.0, 1.0)
     
     @staticmethod
     def x_one() -> Vector3:
+        """Return the unit X vector (1, 0, 0).
+
+        :return: A Vector3 pointing along the X axis.
+        :rtype: Vector3
+        """
         return Vector3(1.0, 0.0, 0.0)
     
     @staticmethod
     def y_one() -> Vector3:
+        """Return the unit Y vector (0, 1, 0).
+
+        :return: A Vector3 pointing along the Y axis.
+        :rtype: Vector3
+        """
         return Vector3(0.0, 1.0, 0.0)
     
     @staticmethod
     def z_one() -> Vector3:
+        """Return the unit Z vector (0, 0, 1).
+
+        :return: A Vector3 pointing along the Z axis.
+        :rtype: Vector3
+        """
         return Vector3(0.0, 0.0, 1.0)
     
     def cross(self, other: Vector3) -> Vector3:
+        """Compute the cross product with another Vector3.
+
+        :param other: The other vector.
+        :return: The cross product vector.
+        :rtype: Vector3
+        """
         return (self * other.yzx - self.yzx * other).yzx
 
 
 class Vector4(Vector):
+    """A 4-component floating-point vector."""
     __slots__ = ()
     
     @staticmethod
     def zero() -> Vector4:
+        """Return the zero vector (0, 0, 0, 0).
+
+        :return: A zero Vector4.
+        :rtype: Vector4
+        """
         return Vector4(0.0, 0.0, 0.0, 0.0)
     
     @staticmethod
     def one() -> Vector4:
+        """Return the one vector (1, 1, 1, 1).
+
+        :return: A unit-value Vector4.
+        :rtype: Vector4
+        """
         return Vector4(1.0, 1.0, 1.0, 1.0)
     
     @staticmethod
     def x_one() -> Vector4:
+        """Return the unit X vector (1, 0, 0, 0).
+
+        :return: A Vector4 pointing along the X axis.
+        :rtype: Vector4
+        """
         return Vector4(1.0, 0.0, 0.0, 0.0)
     
     @staticmethod
     def y_one() -> Vector4:
+        """Return the unit Y vector (0, 1, 0, 0).
+
+        :return: A Vector4 pointing along the Y axis.
+        :rtype: Vector4
+        """
         return Vector4(0.0, 1.0, 0.0, 0.0)
     
     @staticmethod
     def z_one() -> Vector4:
+        """Return the unit Z vector (0, 0, 1, 0).
+
+        :return: A Vector4 pointing along the Z axis.
+        :rtype: Vector4
+        """
         return Vector4(0.0, 0.0, 1.0, 0.0)
     
     @staticmethod
     def w_one() -> Vector4:
+        """Return the unit W vector (0, 0, 0, 1).
+
+        :return: A Vector4 pointing along the W axis.
+        :rtype: Vector4
+        """
         return Vector4(0.0, 0.0, 0.0, 1.0)
