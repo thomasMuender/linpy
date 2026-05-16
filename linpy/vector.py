@@ -225,9 +225,7 @@ class Vector:
         if all(c in _VALID_COMPONENTS for c in name):
             indices = [name_to_idx(n) for n in name]
             if any(i >= self.num for i in indices):
-                raise IndexError(
-                    f"Component '{name}' out of range for {type(self).__name__}"
-                )
+                raise IndexError(f"Component '{name}' out of range for {type(self).__name__}")
             if len(name) == 1:
                 return self.values[indices[0]]
             vals = [self.values[i] for i in indices]
