@@ -128,14 +128,14 @@ v.to_numpy()  # returns a numpy array
 ### Constants (properties on each type)
 
 ```python
-Vector3.zero()    # Vector3(0, 0, 0)
-Vector3.one()     # Vector3(1, 1, 1)
-Vector3.x_one()   # Vector3(1, 0, 0)
-Vector3.y_one()   # Vector3(0, 1, 0)
-Vector3.z_one()   # Vector3(0, 0, 1)
+Vector3.zero    # Vector3(0, 0, 0)
+Vector3.one     # Vector3(1, 1, 1)
+Vector3.x_one   # Vector3(1, 0, 0)
+Vector3.y_one   # Vector3(0, 1, 0)
+Vector3.z_one   # Vector3(0, 0, 1)
 
 # Vector4 additionally provides:
-Vector4.w_one()   # Vector4(0, 0, 0, 1)
+Vector4.w_one   # Vector4(0, 0, 0, 1)
 ```
 
 ---
@@ -158,7 +158,7 @@ Quaternion(Vector4(x, y, z, w))   # from Vector4
 ### Factory Methods
 
 ```python
-Quaternion.identity()                     # identity quaternion (no rotation)
+Quaternion.identity                     # identity quaternion (no rotation)
 Quaternion.from_rotation_x(90)            # 90° rotation about X axis (degrees)
 Quaternion.from_rotation_y(45)            # rotation about Y axis
 Quaternion.from_rotation_z(30)            # rotation about Z axis
@@ -376,10 +376,10 @@ sg.apply_transform(
 ```python
 root_name = SceneGraph.root_name   # "__root__"
 
-sg.apply_transform("torso",  root_name, Vector3(0, 1, 0), Quaternion.identity())
-sg.apply_transform("head",   "torso",   Vector3(0, 1, 0), Quaternion.identity())
-sg.apply_transform("l_hand", "torso",   Vector3(-1, 0, 0), Quaternion.identity())
-sg.apply_transform("r_hand", "torso",   Vector3( 1, 0, 0), Quaternion.identity())
+sg.apply_transform("torso",  root_name, Vector3(0, 1, 0), Quaternion.identity)
+sg.apply_transform("head",   "torso",   Vector3(0, 1, 0), Quaternion.identity)
+sg.apply_transform("l_hand", "torso",   Vector3(-1, 0, 0), Quaternion.identity)
+sg.apply_transform("r_hand", "torso",   Vector3( 1, 0, 0), Quaternion.identity)
 ```
 
 ### Accessing Nodes
@@ -414,10 +414,10 @@ Nodes can be registered in any order. The graph inserts a zero-pose placeholder 
 
 ```python
 # Register the child before the parent exists
-sg.apply_transform("wheel", "axle", Vector3(1, 0, 0), Quaternion.identity())
+sg.apply_transform("wheel", "axle", Vector3(1, 0, 0), Quaternion.identity)
 
 # Now register the parent — the placeholder is promoted automatically
-sg.apply_transform("axle", root_name, Vector3(0, 0, 5), Quaternion.identity())
+sg.apply_transform("axle", root_name, Vector3(0, 0, 5), Quaternion.identity)
 
 print(sg["wheel"].position)   # Vector3(1.0, 0.0, 5.0) — correctly parented
 ```

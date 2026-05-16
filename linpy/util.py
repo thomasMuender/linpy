@@ -1,5 +1,13 @@
 import math
 
+class classproperty():
+
+    def __init__(self, func) -> None:
+        self.f = func
+
+    def __get__(self, instance, owner):
+        return self.f()
+
 def clamp(value: float, min_val: float, max_val: float) -> float:
     return max(min(value, max_val), min_val)
 

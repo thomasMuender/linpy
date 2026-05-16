@@ -20,7 +20,7 @@ class SceneGraph():
     def __init__(self) -> None:
         """Initialize an empty scene graph with a root transform."""
         self.__transforms: dict[str, Transform] = {}
-        self.__root = Transform(Vector3.zero(), Quaternion.identity(), self.root_name)
+        self.__root = Transform(Vector3.zero, Quaternion.identity, self.root_name)
 
     def __getitem__(self, key: str) -> Transform:
         """Retrieve a transform by name.
@@ -59,7 +59,7 @@ class SceneGraph():
             parent = self.__transforms[parent_name]
         else:
             # Parent not seen yet — create a placeholder under root
-            parent = Transform(Vector3.zero(), Quaternion.identity(), parent_name)
+            parent = Transform(Vector3.zero, Quaternion.identity, parent_name)
             self.__root.add_child(parent)
             self.__transforms[parent_name] = parent
 

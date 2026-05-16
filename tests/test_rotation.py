@@ -84,7 +84,7 @@ class TestQuaternionConstruction:
 
     def test_identity_property(self):
         # The identity quaternion encodes zero rotation: (0, 0, 0, 1).
-        q = Quaternion(0, 0, 0, 1).identity()
+        q = Quaternion(0, 0, 0, 1).identity
         assert_quat_equal(q, [0, 0, 0, 1])
 
     def test_len(self):
@@ -709,33 +709,33 @@ def assert_quat_equiv(a, b, tol=1e-6):
 
 class TestSlerp:
     def test_t0_returns_self(self):
-        a = Quaternion.identity()
+        a = Quaternion.identity
         b = Quaternion.from_rotation_y(90)
         result = a.slerp(b, 0.0)
         assert_quat_equiv(result, a)
 
     def test_t1_returns_other(self):
-        a = Quaternion.identity()
+        a = Quaternion.identity
         b = Quaternion.from_rotation_y(90)
         result = a.slerp(b, 1.0)
         assert_quat_equiv(result, b)
 
     def test_midpoint_rotation(self):
-        a = Quaternion.identity()
+        a = Quaternion.identity
         b = Quaternion.from_rotation_y(90)
         mid = a.slerp(b, 0.5)
         expected = Quaternion.from_rotation_y(45)
         assert_quat_equiv(mid, expected, tol=1e-5)
 
     def test_slerp_identity_to_identity(self):
-        a = Quaternion.identity()
-        b = Quaternion.identity()
+        a = Quaternion.identity
+        b = Quaternion.identity
         result = a.slerp(b, 0.5)
         assert_quat_equiv(result, a)
 
     def test_slerp_opposite_takes_short_path(self):
-        a = Quaternion.identity()
-        b = -Quaternion.identity()
+        a = Quaternion.identity
+        b = -Quaternion.identity
         result = a.slerp(b, 0.5)
         # Should still be close to identity since they represent the same rotation
         assert_quat_equiv(result, a, tol=1e-4)
@@ -757,7 +757,7 @@ class TestLookRotation:
     def test_look_forward_z(self):
         q = Quaternion.look_rotation(Vector3(0, 0, 1))
         # Looking down +Z with default up should be identity
-        assert_quat_equiv(q, Quaternion.identity(), tol=1e-5)
+        assert_quat_equiv(q, Quaternion.identity, tol=1e-5)
 
     def test_look_forward_x(self):
         q = Quaternion.look_rotation(Vector3(1, 0, 0))
@@ -786,12 +786,12 @@ class TestQuaternionAngleBetween:
         assert q.angle_between(q) == pytest.approx(0.0, abs=1e-5)
 
     def test_identity_vs_90(self):
-        a = Quaternion.identity()
+        a = Quaternion.identity
         b = Quaternion.from_rotation_y(90)
         assert a.angle_between(b) == pytest.approx(90.0, abs=1e-4)
 
     def test_identity_vs_180(self):
-        a = Quaternion.identity()
+        a = Quaternion.identity
         b = Quaternion.from_rotation_y(180)
         assert a.angle_between(b) == pytest.approx(180.0, abs=1e-4)
 
@@ -812,7 +812,7 @@ class TestQuaternionAngleBetween:
 
 class TestToMatrix4x4:
     def test_identity_gives_identity_matrix(self):
-        m = Quaternion.identity().to_matrix4x4()
+        m = Quaternion.identity.to_matrix4x4()
         np.testing.assert_allclose(m, np.eye(4), atol=1e-7)
 
     def test_shape_is_4x4(self):

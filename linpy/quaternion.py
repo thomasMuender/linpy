@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Iterator, overload
 import numpy as np
-from .util import clamp, rcp, rsqrt, sincos, name_to_idx
+from .util import clamp, rcp, rsqrt, sincos, name_to_idx, classproperty
 from .vector import Vector2, Vector3, Vector4, Scalar
 
 # Pre-computed sign sequences for each Euler rotation order
@@ -198,7 +198,7 @@ class Quaternion:
         """
         self.values.__setitem__(key, newvalue)
 
-    @staticmethod
+    @classproperty
     def identity() -> Quaternion:
         """Return the identity quaternion (no rotation).
 
@@ -277,7 +277,7 @@ class Quaternion:
             val = 1.0 + m00 - m11 - m22
             s = math.sqrt(max(0.0, val)) * 2
             if s < 1e-15:
-                return Quaternion.identity()
+                return Quaternion.identity
             w = (m21 - m12) / s
             x = 0.25 * s
             y = (m01 + m10) / s
@@ -286,7 +286,7 @@ class Quaternion:
             val = 1.0 + m11 - m00 - m22
             s = math.sqrt(max(0.0, val)) * 2
             if s < 1e-15:
-                return Quaternion.identity()
+                return Quaternion.identity
             w = (m02 - m20) / s
             x = (m01 + m10) / s
             y = 0.25 * s
@@ -295,7 +295,7 @@ class Quaternion:
             val = 1.0 + m22 - m00 - m11
             s = math.sqrt(max(0.0, val)) * 2
             if s < 1e-15:
-                return Quaternion.identity()
+                return Quaternion.identity
             w = (m10 - m01) / s
             x = (m02 + m20) / s
             y = (m12 + m21) / s
@@ -356,7 +356,7 @@ class Quaternion:
         """
         d = self.values.dot(self.values)
         if d < 1e-30:
-            return Quaternion.identity()
+            return Quaternion.identity
         return Quaternion(rsqrt(d) * self.values)
 
     def inverse(self) -> Quaternion:
@@ -367,7 +367,7 @@ class Quaternion:
         """
         d = self.values.dot(self.values)
         if d < 1e-30:
-            return Quaternion.identity()
+            return Quaternion.identity
         return Quaternion(rcp(d) * self.values * Vector4(-1., -1., -1., 1.))
 
     def rotate_x(self, deg: float) -> Quaternion:

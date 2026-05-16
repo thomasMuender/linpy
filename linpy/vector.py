@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Iterator, Union, Self
 import numpy as np
-from .util import clamp, rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS
+from .util import clamp, rsqrt, name_to_idx, has_unique_characters, highest_idx, _VALID_COMPONENTS, classproperty
 
 # Type alias for scalar values accepted in arithmetic
 Scalar = Union[int, float]
@@ -520,7 +520,7 @@ class Vector2(Vector):
     """A 2-component floating-point vector."""
     __slots__ = ()
 
-    @staticmethod
+    @classproperty
     def zero() -> Vector2:
         """Return the zero vector (0, 0).
 
@@ -529,7 +529,7 @@ class Vector2(Vector):
         """
         return Vector2(0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def one() -> Vector2:
         """Return the one vector (1, 1).
 
@@ -538,7 +538,7 @@ class Vector2(Vector):
         """
         return Vector2(1.0, 1.0)
     
-    @staticmethod
+    @classproperty
     def x_one() -> Vector2:
         """Return the unit X vector (1, 0).
 
@@ -547,7 +547,7 @@ class Vector2(Vector):
         """
         return Vector2(1.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def y_one() -> Vector2:
         """Return the unit Y vector (0, 1).
 
@@ -561,7 +561,7 @@ class Vector3(Vector):
     """A 3-component floating-point vector."""
     __slots__ = ()
 
-    @staticmethod
+    @classproperty
     def zero() -> Vector3:
         """Return the zero vector (0, 0, 0).
 
@@ -570,7 +570,7 @@ class Vector3(Vector):
         """
         return Vector3(0.0, 0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def one() -> Vector3:
         """Return the one vector (1, 1, 1).
 
@@ -579,7 +579,7 @@ class Vector3(Vector):
         """
         return Vector3(1.0, 1.0, 1.0)
     
-    @staticmethod
+    @classproperty
     def x_one() -> Vector3:
         """Return the unit X vector (1, 0, 0).
 
@@ -588,7 +588,7 @@ class Vector3(Vector):
         """
         return Vector3(1.0, 0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def y_one() -> Vector3:
         """Return the unit Y vector (0, 1, 0).
 
@@ -597,7 +597,7 @@ class Vector3(Vector):
         """
         return Vector3(0.0, 1.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def z_one() -> Vector3:
         """Return the unit Z vector (0, 0, 1).
 
@@ -620,7 +620,7 @@ class Vector4(Vector):
     """A 4-component floating-point vector."""
     __slots__ = ()
     
-    @staticmethod
+    @classproperty
     def zero() -> Vector4:
         """Return the zero vector (0, 0, 0, 0).
 
@@ -629,7 +629,7 @@ class Vector4(Vector):
         """
         return Vector4(0.0, 0.0, 0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def one() -> Vector4:
         """Return the one vector (1, 1, 1, 1).
 
@@ -638,7 +638,7 @@ class Vector4(Vector):
         """
         return Vector4(1.0, 1.0, 1.0, 1.0)
     
-    @staticmethod
+    @classproperty
     def x_one() -> Vector4:
         """Return the unit X vector (1, 0, 0, 0).
 
@@ -647,7 +647,7 @@ class Vector4(Vector):
         """
         return Vector4(1.0, 0.0, 0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def y_one() -> Vector4:
         """Return the unit Y vector (0, 1, 0, 0).
 
@@ -656,7 +656,7 @@ class Vector4(Vector):
         """
         return Vector4(0.0, 1.0, 0.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def z_one() -> Vector4:
         """Return the unit Z vector (0, 0, 1, 0).
 
@@ -665,7 +665,7 @@ class Vector4(Vector):
         """
         return Vector4(0.0, 0.0, 1.0, 0.0)
     
-    @staticmethod
+    @classproperty
     def w_one() -> Vector4:
         """Return the unit W vector (0, 0, 0, 1).
 

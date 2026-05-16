@@ -22,7 +22,7 @@ from linpy.scene_graph import SceneGraph
 
 # ------------------------------------------------------------------ helpers --
 
-IDENTITY = Quaternion.identity()
+IDENTITY = Quaternion.identity
 
 
 def vec(x, y, z) -> Vector3:

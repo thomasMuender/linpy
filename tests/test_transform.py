@@ -635,31 +635,31 @@ class TestTransformEdgeCases:
 
 class TestDirectionProperties:
     def test_identity_z_dir_is_z(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         assert_vec_equal(t.z_dir, [0, 0, 1])
 
     def test_identity_x_dir_is_x(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         assert_vec_equal(t.x_dir, [1, 0, 0])
 
     def test_identity_y_dir_is_y(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         assert_vec_equal(t.y_dir, [0, 1, 0])
 
     def test_rotated_z_dir(self):
-        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        t = Transform(Vector3.zero, Quaternion.from_rotation_y(90))
         assert_vec_equal(t.z_dir, [1, 0, 0], tol=1e-5)
 
     def test_rotated_x_dir(self):
-        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        t = Transform(Vector3.zero, Quaternion.from_rotation_y(90))
         assert_vec_equal(t.x_dir, [0, 0, -1], tol=1e-5)
 
     def test_rotated_y_dir_unchanged_by_y_rotation(self):
-        t = Transform(Vector3.zero(), Quaternion.from_rotation_y(90))
+        t = Transform(Vector3.zero, Quaternion.from_rotation_y(90))
         assert_vec_equal(t.y_dir, [0, 1, 0], tol=1e-5)
 
     def test_axes_are_orthonormal(self):
-        t = Transform(Vector3.zero(), Quaternion.from_rotation_x(37))
+        t = Transform(Vector3.zero, Quaternion.from_rotation_x(37))
         assert t.z_dir.dot(t.x_dir) == pytest.approx(0.0, abs=1e-6)
         assert t.z_dir.dot(t.y_dir) == pytest.approx(0.0, abs=1e-6)
         assert t.x_dir.dot(t.y_dir) == pytest.approx(0.0, abs=1e-6)
@@ -674,22 +674,22 @@ class TestDirectionProperties:
 
 class TestLookAt:
     def test_look_at_z_dir(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         t.look_at(Vector3(0, 0, 5))
         assert_vec_equal(t.z_dir, [0, 0, 1], tol=1e-5)
 
     def test_look_at_positive_x(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         t.look_at(Vector3(10, 0, 0))
         assert_vec_equal(t.z_dir, [1, 0, 0], tol=1e-5)
 
     def test_look_at_negative_z(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         t.look_at(Vector3(0, 0, -10))
         assert_vec_equal(t.z_dir, [0, 0, -1], tol=1e-5)
 
     def test_look_at_with_offset_position(self):
-        t = Transform(Vector3(5, 0, 0), Quaternion.identity())
+        t = Transform(Vector3(5, 0, 0), Quaternion.identity)
         t.look_at(Vector3(5, 0, 10))
         assert_vec_equal(t.z_dir, [0, 0, 1], tol=1e-5)
 
@@ -701,14 +701,14 @@ class TestLookAt:
         assert list(t.rotation) == pytest.approx(list(rot), abs=1e-7)
 
     def test_look_at_custom_up(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         t.look_at(Vector3(1, 0, 0), Vector3(0, 0, 1))
         assert_vec_equal(t.z_dir, [1, 0, 0], tol=1e-5)
         assert_vec_equal(t.y_dir, [0, 0, 1], tol=1e-5)
 
     def test_look_at_propagates_to_children(self):
-        parent = Transform(Vector3.zero(), Quaternion.identity(), "parent")
-        child = Transform(Vector3(0, 0, 1), Quaternion.identity(), "child")
+        parent = Transform(Vector3.zero, Quaternion.identity, "parent")
+        child = Transform(Vector3(0, 0, 1), Quaternion.identity, "child")
         parent.add_child(child)
         parent.look_at(Vector3(1, 0, 0))
         # Child world position should have been updated
@@ -722,18 +722,18 @@ class TestLookAt:
 
 class TestMatrix4x4:
     def test_identity_gives_identity_matrix(self):
-        t = Transform(Vector3.zero(), Quaternion.identity())
+        t = Transform(Vector3.zero, Quaternion.identity)
         np.testing.assert_allclose(t.to_matrix4x4(), np.eye(4), atol=1e-7)
 
     def test_position_in_last_column(self):
-        t = Transform(Vector3(1, 2, 3), Quaternion.identity())
+        t = Transform(Vector3(1, 2, 3), Quaternion.identity)
         m = t.to_matrix4x4()
         np.testing.assert_allclose(m[:3, 3], [1, 2, 3], atol=1e-7)
         np.testing.assert_allclose(m[3, :], [0, 0, 0, 1], atol=1e-7)
 
     def test_rotation_in_upper_left(self):
         q = Quaternion.from_rotation_y(90)
-        t = Transform(Vector3.zero(), q)
+        t = Transform(Vector3.zero, q)
         m = t.to_matrix4x4()
         np.testing.assert_allclose(m[:3, :3], q.to_matrix3x3(), atol=1e-7)
 
