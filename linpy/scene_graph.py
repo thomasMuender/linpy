@@ -30,6 +30,15 @@ class SceneGraph():
         :raises KeyError: If the name is not found.
         """
         return self.__transforms.__getitem__(key)
+    
+    def __contains__(self, item):
+        return self.__transforms.__contains__(item)
+    
+    def __iter__(self):
+        return self.__transforms.__iter__()
+
+    def __len__(self):
+        return self.__transforms.__len__()
 
     @property
     def root(self) -> Transform:
