@@ -89,7 +89,7 @@ class Quaternion:
         :rtype: bool
         """
         if isinstance(other, Quaternion):
-            return self.values == other.values
+            return self.values.__eq__(other.values)
         
         return False
 
@@ -101,9 +101,9 @@ class Quaternion:
         :rtype: bool
         """
         if isinstance(other, Quaternion):
-            return self.values != other.values
+            return not self.__eq__(other)
         
-        return False
+        return True
 
     def __neg__(self) -> Quaternion:
         """Negate all components of the quaternion.

@@ -56,12 +56,12 @@ class Transform:
         :param value: The new local position.
         :raises TypeError: If *value* is not a Vector3.
         """
-        if isinstance(value, Vector3):
+        if not isinstance(value, Vector3):
+            raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
+        
+        if self.__local_position != value:
             self.__local_position = value
             self.__propagate()
-            return
-        
-        raise TypeError(f"local_position must be Vector3, got {type(value).__name__}")
 
     @property
     def local_rotation(self) -> Quaternion:
@@ -79,12 +79,12 @@ class Transform:
         :param value: The new local rotation.
         :raises TypeError: If *value* is not a Quaternion.
         """
-        if isinstance(value, Quaternion):
+        if not isinstance(value, Quaternion):
+            raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
+        
+        if self.__local_rotation != value:
             self.__local_rotation = value
             self.__propagate()
-            return
-
-        raise TypeError(f"local_rotation must be Quaternion, got {type(value).__name__}")
 
     @property
     def position(self) -> Vector3:
@@ -102,12 +102,12 @@ class Transform:
         :param value: The new world position.
         :raises TypeError: If *value* is not a Vector3.
         """
-        if isinstance(value, Vector3):
+        if not isinstance(value, Vector3):
+            raise TypeError(f"position must be Vector3, got {type(value).__name__}")
+        
+        if self.__position != value:
             self.__local_position = value if self.__parent is None else self.__parent.rotation.inverse() * (value - self.__parent.position)
-            self.__propagate()
-            return
-
-        raise TypeError(f"position must be Vector3, got {type(value).__name__}")
+            self.__propagate()   
 
     @property
     def rotation(self) -> Quaternion:
@@ -126,11 +126,11 @@ class Transform:
         :raises TypeError: If *value* is not a Quaternion.
         """
         if isinstance(value, Quaternion):
+            raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
+        
+        if self.__rotation != value:
             self.__local_rotation = value if self.__parent is None else self.__parent.rotation.inverse() * value
             self.__propagate()
-            return
-
-        raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
 
     @property
     def parent(self) -> Transform | None:
@@ -148,9 +148,13 @@ class Transform:
         :param value: The new parent, or None to detach.
         :raises ValueError: If setting self as parent or creating a cycle.
         """
+        if value is self.__parent:
+            return
+        
         if value is self:
             raise ValueError("A transform cannot be its own parent")
-        if isinstance(value, Transform) and value is not self.__parent and self.__is_descendant(value):
+        
+        if isinstance(value, Transform) and self.__is_descendant(value):
             raise ValueError("Cannot set a descendant as parent")
 
         # Detach from the current parent
@@ -166,6 +170,26 @@ class Transform:
 
         # Recompute world transform and propagate to children
         self.__propagate()
+
+    def set_local_pos_rot(self, local_position: Vector3, local_rotation: Quaternion) -> None:
+
+        if not isinstance(local_position, Vector3) or not isinstance(local_rotation, Quaternion):
+            raise TypeError
+        
+        if self.__local_position != local_position or self.__local_rotation != local_rotation:
+            self.__local_position = local_position
+            self.__local_rotation = local_rotation
+            self.__propagate()
+    
+    def set_local_pos_rot_parent(self, local_position: Vector3, local_rotation: Quaternion, parent: Transform) -> None:
+
+        if not isinstance(local_position, Vector3) or not isinstance(local_rotation, Quaternion) or not isinstance(parent, Transform):
+            raise TypeError
+        
+        if self.__local_position != local_position or self.__local_rotation != local_rotation or self.__parent is not parent:
+            self.__local_position = local_position
+            self.__local_rotation = local_rotation
+            self.parent = parent
 
     @property
     def x_dir(self) -> Vector3:
@@ -348,6 +372,7 @@ class Transform:
         """
         if not isinstance(transform, Transform):
             raise TypeError(f"child must be Transform, got {type(transform).__name__}")
+        
         transform.parent = self
 
     def __add_child(self, transform: Transform) -> None:
@@ -366,14 +391,22 @@ class Transform:
     def __propagate(self) -> None:
         """Recalculate this transform's world position/rotation from its locals,
         then recursively propagate to all children."""
-        if self.__parent is None:
-            self.__position = self.__local_position
-            self.__rotation = self.__local_rotation
-        else:
-            self.__position = (self.__parent.rotation * self.__local_position) + self.__parent.position
-            self.__rotation = self.__parent.rotation * self.__local_rotation
-        for child in self.__children:
-            child.__propagate()
+
+        stack: list[Transform] = list()
+        stack.append(self)
+
+        while stack:
+            transform: Transform = stack.pop()
+
+            if transform.__parent is None:
+                transform.__position = transform.__local_position
+                transform.__rotation = transform.__local_rotation
+            else:
+                transform.__position = (transform.__parent.rotation * transform.__local_position) + transform.__parent.position
+                transform.__rotation = transform.__parent.rotation * transform.__local_rotation
+            
+            for child in transform:
+                stack.append(child)
 
     def world_to_local(self, world_pos: Vector3) -> Vector3:
         """Transform a world-space position into this transform's local space.

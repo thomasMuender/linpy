@@ -91,7 +91,7 @@ class Vector:
         :rtype: bool
         """
         if type(self) is type(other):
-            return self.values == other.values  # type: ignore[union-attr]
+            return all([math.isclose(a, b) for a,b in zip(self.values, other.values)])
         
         return False
 
@@ -103,9 +103,9 @@ class Vector:
         :rtype: bool
         """
         if type(self) is type(other):
-            return self.values != other.values  # type: ignore[union-attr]
+            return not self.__eq__(other)
         
-        return False
+        return True
 
     def __neg__(self) -> Self:
         """Negate all components.

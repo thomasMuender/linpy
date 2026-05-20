@@ -73,11 +73,13 @@ class SceneGraph():
             self.__transforms[parent_name] = parent
 
         if transform_name in self.__transforms:
-            t = self.__transforms[transform_name]
-            t.local_position = local_position
-            t.local_rotation = local_rotation
+            t: Transform = self.__transforms[transform_name]
+
             if t.parent is not parent:
-                t.parent = parent
+                t.set_local_pos_rot_parent(local_position, local_rotation, parent)
+            else:
+                t.set_local_pos_rot(local_position, local_rotation)
+
         else:
             # Brand-new transform
             t = Transform(local_position, local_rotation, transform_name)
