@@ -124,7 +124,7 @@ class Transform:
         :param value: The new world rotation.
         :raises TypeError: If *value* is not a Quaternion.
         """
-        if isinstance(value, Quaternion):
+        if not isinstance(value, Quaternion):
             raise TypeError(f"rotation must be Quaternion, got {type(value).__name__}")
         
         if self.__rotation != value:
@@ -286,11 +286,11 @@ class Transform:
         :param newvalue: The Transform to place at the index.
         :raises TypeError: If *newvalue* is not a Transform.
         """
-        if isinstance(newvalue, Transform):
-            self.__children[key] = newvalue
-            self.__children[key].parent = self
+        if not isinstance(newvalue, Transform):
+            raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
 
-        raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
+        self.__children[key] = newvalue
+        self.__children[key].parent = self
 
     def inverse(self) -> Transform:
         """Compute the inverse of this transform.

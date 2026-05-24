@@ -146,8 +146,6 @@ cdef class Quaternion:
         cdef double oy = other.y
         cdef double oz = other.z
         cdef double ow = other.w
-        cdef double theta = math.acos(d)
-        cdef double sin_theta = math.sin(theta)
 
         if d < 0.0:
             d = -d
@@ -156,11 +154,14 @@ cdef class Quaternion:
             oz = -oz
             ow = -ow
 
+        cdef double theta, sin_theta
         cdef double s0, s1
         if d > 1.0 - EPSILON:
             s0 = 1.0 - t
             s1 = t
         else:
+            theta = math.acos(d)
+            sin_theta = math.sin(theta)
             s0 = math.sin((1.0 - t) * theta) / sin_theta
             s1 = math.sin(t * theta) / sin_theta
 
@@ -179,20 +180,21 @@ cdef class Quaternion:
         cdef double sqy = self.y * self.y
         cdef double sqz = self.z * self.z
         cdef double sqw = self.w * self.w
-        cdef double sinx = 2.0 * (self.w * self.x - self.y * self.z)
         cdef double siny = 2.0 * (self.w * self.y - self.x * self.z)
+        cdef double sinx_zxy
 
         cdef double ex, ey, ez
 
         if order == "ZXY":
-            if math.fabs(sinx) >= 1.0:
-                ex = math.copysign(90.0, sinx)
-                ey = to_degree(math.atan2(2.0 * (self.x * self.z + self.w * self.y), sqw - sqx + sqz - sqy))
+            sinx_zxy = 2.0 * (self.w * self.x + self.y * self.z)
+            if math.fabs(sinx_zxy) >= 1.0:
+                ex = math.copysign(90.0, sinx_zxy)
+                ey = to_degree(math.atan2(2.0 * (self.x * self.z + self.w * self.y), sqw + sqx - sqy - sqz))
                 ez = 0.0
             else:
-                ex = to_degree(math.asin(sinx))
-                ey = to_degree(math.atan2(2.0 * (self.x * self.z + self.w * self.y), 1.0 - 2.0 * (sqx + sqy)))
-                ez = to_degree(math.atan2(2.0 * (self.x * self.y + self.w * self.z), 1.0 - 2.0 * (sqx + sqz)))
+                ex = to_degree(math.asin(sinx_zxy))
+                ey = to_degree(math.atan2(2.0 * (self.w * self.y - self.x * self.z), 1.0 - 2.0 * (sqx + sqy)))
+                ez = to_degree(math.atan2(2.0 * (self.w * self.z - self.x * self.y), 1.0 - 2.0 * (sqx + sqz)))
         else:
             if math.fabs(siny) >= 1.0:
                 ex = to_degree(math.atan2(2.0 * (self.x * self.y + self.w * self.z), sqw + sqx - sqy - sqz))
