@@ -3,6 +3,9 @@ from linpy.quaternion import Quaternion
 from linpy.transform import Transform
 from linpy.scene_graph import SceneGraph
 
+import time
+import random
+
 # Create a scene graph
 sg = SceneGraph()
 
@@ -38,16 +41,16 @@ for name in sg:
     t = sg[name]
     print(f"{t.name}: pos={t.position}, rot={t.local_rotation.to_euler()}")
 
-# Update the shoulder rotation — children propagate automatically
-print("\n=== After rotating shoulder by 20 deg on Y ===")
-sg.apply_transform(
-    "shoulder",
-    SceneGraph.root_name,
-    Vector3(0.0, 1.0, 0.0),
-    Quaternion.from_euler(0.0, 20.0, 45.0),
-)
+start = time.time()
 
-for name in sg:
-    t = sg[name]
-    print(f"{t.name}: pos={t.position}")
+for i in range(10000):
+    sg.apply_transform(
+        "shoulder",
+        SceneGraph.root_name,
+        Vector3(random.random(), random.random(), random.random()),
+        Quaternion(random.random(), random.random(), random.random(), random.random())
+    )
 
+print("\n=== Timing ===")
+dt = time.time() - start
+print(dt, "s")

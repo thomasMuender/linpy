@@ -5,8 +5,8 @@ extensions = [
     Extension("linpy.util", ["linpy/util.pyx"]),
     Extension("linpy.vector3", ["linpy/vector3.pyx"]),
     Extension("linpy.quaternion", ["linpy/quaternion.pyx"]),
-    Extension("linpy.transform", ["linpy/transform.py"]),
-    Extension("linpy.scene_graph", ["linpy/scene_graph.py"]),
+    Extension("linpy.transform", ["linpy/transform.pyx"]),
+    Extension("linpy.scene_graph", ["linpy/scene_graph.pyx"]),
 ]
 
 setup(
