@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterator, overload
-import numpy as np
-from .vector import Vector3, Vector4
+from .vector3 import Vector3
 from .quaternion import Quaternion
 
 class Transform:
@@ -243,23 +242,16 @@ class Transform:
     def __mul__(self, other: Vector3) -> Vector3:
         ...
 
-    @overload
-    def __mul__(self, other: Vector4) -> Vector4:
-        ...
-
-    def __mul__(self, other: Transform | Vector3 | Vector4) -> Transform | Vector3 | Vector4:
+    def __mul__(self, other: Transform | Vector3) -> Transform | Vector3:
         """Compose this transform with another object.
 
         Transform * Transform -> composed transform (other expressed in this space)
         Transform * Vector3  -> point transformed into world space
-        Transform * Vector4  -> homogeneous-coordinate transform (w-weighted position)
         """
         if isinstance(other, Transform):
             return Transform((self.rotation * other.position) + self.position, self.rotation * other.rotation, self.name + "*" + other.name)
         elif isinstance(other, Vector3):
             return (self.rotation * other) + self.position
-        elif isinstance(other, Vector4):
-            return Vector4((self.rotation * other.xyz) + (self.position * other.w), other.w)
         
         raise TypeError(f"Cannot multiply Transform by {type(other).__name__}")
     
@@ -300,35 +292,6 @@ class Transform:
 
         raise TypeError(f"children must be Transform, got {type(newvalue).__name__}")
 
-    def to_matrix4x4(self) -> np.ndarray:
-        """Convert this transform to a 4x4 homogeneous transformation matrix.
-
-        :return: A 4x4 NumPy matrix encoding rotation and translation.
-        :rtype: numpy.ndarray
-        """
-        m = self.rotation.to_matrix4x4()
-        m[0, 3] = self.position.x
-        m[1, 3] = self.position.y
-        m[2, 3] = self.position.z
-        return m
-
-    @staticmethod
-    def from_matrix4x4(matrix: np.ndarray, name: str = "") -> Transform:
-        """Create a Transform from a 4x4 homogeneous matrix.
-
-        :param matrix: A 4x4 NumPy array.
-        :param name: Optional name for the transform.
-        :return: The constructed Transform.
-        :rtype: Transform
-        :raises ValueError: If *matrix* is not a 4x4 ndarray.
-        """
-        if isinstance(matrix, np.ndarray) and matrix.shape == (4, 4):
-            pos = Vector3(float(matrix[0, 3]), float(matrix[1, 3]), float(matrix[2, 3]))
-            rot = Quaternion.from_matrix3x3(matrix[:3, :3])
-            return Transform(pos, rot, name)
-        
-        raise ValueError("Input must be a 4x4 numpy array")
-
     def inverse(self) -> Transform:
         """Compute the inverse of this transform.
 
@@ -352,17 +315,6 @@ class Transform:
         :param translation: The translation vector in local coordinates.
         """
         self.position = (self.rotation * translation) + self.position
-
-    def look_at(self, target: Vector3, up: Vector3 | None = None) -> None:
-        """Orient this transform to face the target position.
-
-        :param target: The world-space position to look at.
-        :param up: The up reference vector (default world Y-up).
-        """
-        direction = target - self.position
-        if direction.dot(direction) < 1e-15:
-            return
-        self.rotation = Quaternion.look_rotation(direction, up)
 
     def add_child(self, transform: Transform) -> None:
         """Add a child transform to this node.
