@@ -1,4 +1,5 @@
 from typing import Iterator, overload
+from collections.abc import Iterable
 from .vector3 import Vector3
 
 class Quaternion:
@@ -22,9 +23,10 @@ class Quaternion:
 
     @staticmethod
     def identity() -> Quaternion: ...
-
     @staticmethod
     def from_euler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion: ...
+    @staticmethod
+    def from_iterable(iterable: Iterable) -> Quaternion: ...
 
     def dot(self, other: Quaternion) -> float: ...
     def normalize(self) -> None: ...

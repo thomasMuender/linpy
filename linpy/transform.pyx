@@ -1,5 +1,4 @@
 # transform.pyx — Cython implementation of Transform
-from typing import Iterator, overload
 from .vector3 cimport Vector3
 from .quaternion cimport Quaternion
 
@@ -171,7 +170,7 @@ cdef class Transform:
         """Return the number of child transforms."""
         return len(self._children)
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self):
         """Iterate over child transforms."""
         return iter(self._children)
 

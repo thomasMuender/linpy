@@ -101,6 +101,25 @@ cdef class Vector3:
     def z_one() -> Vector3:
         return Vector3(0.0, 0.0, 1.0)
 
+    @staticmethod
+    def from_iterable(iterable) -> Vector3:
+        try:
+            iterator = iter(iterable)
+        except:
+            raise TypeError("Provided argument to from_iterable is not iterable")
+
+        values = []
+
+        try:
+            for i in iterable:
+                values.append(float(i))
+        except:
+            raise TypeError("Provided argument to from_iterable is not of scalar type (castable to float)")
+
+        if len(values) != 3:
+            raise TypeError("Provided argument does not have three components")
+
+        return Vector3(values[0], values[1], values[2])
 
     @property
     def xxx(self) -> Vector3:

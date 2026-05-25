@@ -107,6 +107,26 @@ cdef class Quaternion:
 
         return Quaternion(qx, qy, qz, qw)
 
+    @staticmethod
+    def from_iterable(iterable) -> Quaternion:
+        try:
+            iterator = iter(iterable)
+        except:
+            raise TypeError("Provided argument to from_iterable is not iterable")
+
+        values = []
+
+        try:
+            for i in iterable:
+                values.append(float(i))
+        except:
+            raise TypeError("Provided argument to from_iterable is not of scalar type (castable to float)")
+
+        if len(values) != 4:
+            raise TypeError("Provided argument does not have four components")
+
+        return Quaternion(values[0], values[1], values[2], values[3])
+
     cpdef double dot(self, Quaternion other):
         return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
 
