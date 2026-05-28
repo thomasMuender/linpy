@@ -11,11 +11,11 @@ extensions = [
 
 setup(
     name='linpy',
-    version='1.1.0',
+    version='1.2.0',
     description='A python package for calculations in R3',
     author='Thomas Muender',
     author_email='thomas.muender@gmail.com',
     packages=['linpy'],
     ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}),
-    setup_requires=['cython'],
+    setup_requires=["setuptools", "wheel", "Cython"],
 )
