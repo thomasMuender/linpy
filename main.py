@@ -1,6 +1,5 @@
 from linpy.vector3 import Vector3
 from linpy.quaternion import Quaternion
-from linpy.transform import Transform
 from linpy.scene_graph import SceneGraph
 
 import time
