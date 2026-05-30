@@ -19,7 +19,17 @@ cdef class Transform:
     cpdef void set_local_pos_rot(self, Vector3 local_position, Quaternion local_rotation)
     cpdef void set_local_pos_rot_parent(self, Vector3 local_position, Quaternion local_rotation, Transform parent)
 
-    cdef void _propagate(self)
-    cdef bint _is_descendant(self, Transform transform)
-    cdef void _add_child(self, Transform transform)
-    cdef void _remove_child(self, Transform transform)
+    cdef void c_propagate(self)
+    cdef bint c_is_descendant(self, Transform transform)
+    cdef void c_append_child(self, Transform transform)
+    cdef void c_remove_child(self, Transform transform)
+
+    cdef Vector3 c_world_to_local(self, Vector3 world_pos)
+    cdef Vector3 c_local_to_world(self, Vector3 local_pos)
+    cdef Transform c_inverse(self)
+    cdef void c_rotate(self, Quaternion rotation)
+    cdef void c_translate(self, Vector3 translation)
+    cdef void c_add_child(self, Transform transform)
+    cdef void c_set_local_pos_rot(self, Vector3 local_position, Quaternion local_rotation)
+    cdef void c_set_local_pos_rot_parent(self, Vector3 local_position, Quaternion local_rotation, Transform parent)
+

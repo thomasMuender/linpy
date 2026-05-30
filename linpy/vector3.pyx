@@ -78,7 +78,10 @@ cdef class Vector3:
         raise TypeError
     
     def __rmul__(self, other) -> Vector3:
-        return self * other
+        if isinstance(other, (float, int)):
+            return self.c_mul_double(other)
+        
+        raise TypeError
 
 
     @staticmethod
@@ -104,7 +107,7 @@ cdef class Vector3:
     @staticmethod
     def from_iterable(iterable) -> Vector3:
         try:
-            iterator = iter(iterable)
+            iter(iterable)
         except:
             raise TypeError("Provided argument to from_iterable is not iterable")
 
@@ -230,40 +233,28 @@ cdef class Vector3:
         return Vector3(self.z, self.z, self.z)
 
     cpdef double dot(self, Vector3 other):
-        return self.x * other.x + self.y * other.y + self.z * other.z
+        return self.c_dot(other)
 
     cpdef double magnitude(self):
-        return math.sqrt(self.dot(self))
+        return self.c_magnitude()
     
     cpdef void normalize(self):
-        cdef double d = self.dot(self)
-
-        if d < EPSILON:
-            return
-
-        cdef double scale = rsqrt(d)
-        self.x *= scale
-        self.y *= scale
-        self.z *= scale
+        self.c_normalize()
 
     cpdef Vector3 normalized(self):
-        cdef double d = self.dot(self)
-        if d < EPSILON:
-            return Vector3(0.0, 0.0, 0.0)
-
-        return rsqrt(d) * self
+        return self.c_normalized()
 
     cpdef Vector3 cross(self, Vector3 other):
-        return (self * other.yzx - self.yzx * other).yzx
+        return self.c_cross(other)
 
     cpdef Vector3 inverse(self):
-        return -self
+        return Vector3(-self.x, -self.y, -self.z)
 
     cpdef Vector3 lerp(self, Vector3 other, double t):
-        return self + (other - self) * t
+        return self.c_lerp(other, t)
 
     cpdef double distance(self, Vector3 other):
-        return (self - other).magnitude()
+        return self.c_distance(other)
 
     cpdef list to_list(self):
         return [self.x, self.y, self.z]
@@ -291,4 +282,51 @@ cdef class Vector3:
         return Vector3(self.x / other.x, self.y / other.y, self.z / other.z)
 
     cdef Vector3 c_div_double(self, double other):
-        return Vector3(self.x / other, self.y / other, self.z / other)
+        cdef double inv = 1.0 / other
+        return Vector3(self.x * inv, self.y * inv, self.z * inv)
+
+
+    cdef double c_dot(self, Vector3 other):
+        return self.x * other.x + self.y * other.y + self.z * other.z
+
+    cdef double c_magnitude(self):
+        return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
+    
+    cdef void c_normalize(self):
+        cdef double d = self.x * self.x + self.y * self.y + self.z * self.z
+
+        if d < EPSILON:
+            return
+
+        cdef double scale = rsqrt(d)
+        self.x *= scale
+        self.y *= scale
+        self.z *= scale
+
+    cdef Vector3 c_normalized(self):
+        cdef double d = self.x * self.x + self.y * self.y + self.z * self.z
+        if d < EPSILON:
+            return Vector3(0.0, 0.0, 0.0)
+
+        cdef double scale = rsqrt(d)
+        return Vector3(self.x * scale, self.y * scale, self.z * scale)
+
+    cdef Vector3 c_cross(self, Vector3 other):
+        return Vector3(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
+
+    cdef Vector3 c_lerp(self, Vector3 other, double t):
+        return Vector3(
+            self.x + (other.x - self.x) * t,
+            self.y + (other.y - self.y) * t,
+            self.z + (other.z - self.z) * t,
+        )
+
+    cdef double c_distance(self, Vector3 other):
+        cdef double dx = self.x - other.x
+        cdef double dy = self.y - other.y
+        cdef double dz = self.z - other.z
+        return math.sqrt(dx * dx + dy * dy + dz * dz)

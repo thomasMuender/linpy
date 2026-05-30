@@ -5,6 +5,55 @@ from .util cimport rsqrt, to_degree, to_radians
 
 cdef double EPSILON = 1e-9
 
+cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order):
+    cdef double rx = to_radians(degX) * 0.5
+    cdef double ry = to_radians(degY) * 0.5
+    cdef double rz = to_radians(degZ) * 0.5
+
+    cdef double sx = math.sin(rx)
+    cdef double cx = math.cos(rx)
+    cdef double sy = math.sin(ry)
+    cdef double cy = math.cos(ry)
+    cdef double sz = math.sin(rz)
+    cdef double cz = math.cos(rz)
+
+    cdef double qx, qy, qz, qw
+
+    if order == "ZXY":
+        qx = sx * cy * cz - cx * sy * sz
+        qy = cx * sy * cz + sx * cy * sz
+        qz = cx * cy * sz + sx * sy * cz
+        qw = cx * cy * cz - sx * sy * sz
+    elif order == "XYZ":
+        qx = sx * cy * cz + cx * sy * sz
+        qy = cx * sy * cz - sx * cy * sz
+        qz = cx * cy * sz + sx * sy * cz
+        qw = cx * cy * cz - sx * sy * sz
+    elif order == "YXZ":
+        qx = sx * cy * cz + cx * sy * sz
+        qy = cx * sy * cz - sx * cy * sz
+        qz = cx * cy * sz - sx * sy * cz
+        qw = cx * cy * cz + sx * sy * sz
+    elif order == "ZYX":
+        qx = sx * cy * cz - cx * sy * sz
+        qy = cx * sy * cz + sx * cy * sz
+        qz = cx * cy * sz - sx * sy * cz
+        qw = cx * cy * cz + sx * sy * sz
+    elif order == "YZX":
+        qx = sx * cy * cz + cx * sy * sz
+        qy = cx * sy * cz + sx * cy * sz
+        qz = cx * cy * sz - sx * sy * cz
+        qw = cx * cy * cz - sx * sy * sz
+    elif order == "XZY":
+        qx = sx * cy * cz - cx * sy * sz
+        qy = cx * sy * cz - sx * cy * sz
+        qz = cx * cy * sz + sx * sy * cz
+        qw = cx * cy * cz + sx * sy * sz
+    else:
+        raise ValueError(f"Unknown rotation order: {order}")
+
+    return Quaternion(qx, qy, qz, qw)
+
 cdef class Quaternion:
     def __cinit__(self, double x, double y, double z, double w):
         self.x = x
@@ -59,58 +108,12 @@ cdef class Quaternion:
 
     @staticmethod
     def from_euler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion:
-        cdef double rx = to_radians(degX) * 0.5
-        cdef double ry = to_radians(degY) * 0.5
-        cdef double rz = to_radians(degZ) * 0.5
-
-        cdef double sx = math.sin(rx)
-        cdef double cx = math.cos(rx)
-        cdef double sy = math.sin(ry)
-        cdef double cy = math.cos(ry)
-        cdef double sz = math.sin(rz)
-        cdef double cz = math.cos(rz)
-
-        cdef double qx, qy, qz, qw
-
-        if order == "ZXY":
-            qx = sx * cy * cz - cx * sy * sz
-            qy = cx * sy * cz + sx * cy * sz
-            qz = cx * cy * sz + sx * sy * cz
-            qw = cx * cy * cz - sx * sy * sz
-        elif order == "XYZ":
-            qx = sx * cy * cz + cx * sy * sz
-            qy = cx * sy * cz - sx * cy * sz
-            qz = cx * cy * sz + sx * sy * cz
-            qw = cx * cy * cz - sx * sy * sz
-        elif order == "YXZ":
-            qx = sx * cy * cz + cx * sy * sz
-            qy = cx * sy * cz - sx * cy * sz
-            qz = cx * cy * sz - sx * sy * cz
-            qw = cx * cy * cz + sx * sy * sz
-        elif order == "ZYX":
-            qx = sx * cy * cz - cx * sy * sz
-            qy = cx * sy * cz + sx * cy * sz
-            qz = cx * cy * sz - sx * sy * cz
-            qw = cx * cy * cz + sx * sy * sz
-        elif order == "YZX":
-            qx = sx * cy * cz + cx * sy * sz
-            qy = cx * sy * cz + sx * cy * sz
-            qz = cx * cy * sz - sx * sy * cz
-            qw = cx * cy * cz - sx * sy * sz
-        elif order == "XZY":
-            qx = sx * cy * cz - cx * sy * sz
-            qy = cx * sy * cz - sx * cy * sz
-            qz = cx * cy * sz + sx * sy * cz
-            qw = cx * cy * cz + sx * sy * sz
-        else:
-            raise ValueError(f"Unknown rotation order: {order}")
-
-        return Quaternion(qx, qy, qz, qw)
+        return c_from_euler(degX, degY, degZ, order)
 
     @staticmethod
     def from_iterable(iterable) -> Quaternion:
         try:
-            iterator = iter(iterable)
+            iter(iterable)
         except:
             raise TypeError("Provided argument to from_iterable is not iterable")
 
@@ -128,9 +131,49 @@ cdef class Quaternion:
         return Quaternion(values[0], values[1], values[2], values[3])
 
     cpdef double dot(self, Quaternion other):
-        return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+        return self.c_dot(other)
 
     cpdef void normalize(self):
+        self.c_normalize()
+
+    cpdef Quaternion normalized(self):
+        return self.c_normalized()
+
+    cpdef Quaternion inverse(self):
+        return self.c_inverse()
+
+    cpdef Quaternion slerp(self, Quaternion other, double t):
+        return self.c_slerp(other, t)
+
+    cpdef list to_list(self):
+        return [self.x, self.y, self.z, self.w]
+
+    def to_euler(self, order: str = "ZXY") -> Vector3:
+        return self.c_to_euler(order)
+
+    cdef Vector3 c_mul_vector(self, Vector3 other):
+        cdef double tx = 2.0 * (self.y * other.z - self.z * other.y)
+        cdef double ty = 2.0 * (self.z * other.x - self.x * other.z)
+        cdef double tz = 2.0 * (self.x * other.y - self.y * other.x)
+
+        return Vector3(
+            other.x + self.w * tx + self.y * tz - self.z * ty,
+            other.y + self.w * ty + self.z * tx - self.x * tz,
+            other.z + self.w * tz + self.x * ty - self.y * tx,
+        )
+
+    cdef Quaternion c_mul_quat(self, Quaternion other):
+        return Quaternion(
+            self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y,
+            self.w * other.y + self.y * other.w + self.z * other.x - self.x * other.z,
+            self.w * other.z + self.z * other.w + self.x * other.y - self.y * other.x,
+            self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z,
+        )
+
+    cdef double c_dot(self, Quaternion other):
+        return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+
+    cdef void c_normalize(self):
         cdef double mag_sq = self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w
 
         if mag_sq < EPSILON:
@@ -142,7 +185,7 @@ cdef class Quaternion:
         self.z *= inv
         self.w *= inv
 
-    cpdef Quaternion normalized(self):
+    cdef Quaternion c_normalized(self):
         cdef double mag_sq = self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w
 
         if mag_sq < EPSILON:
@@ -151,7 +194,7 @@ cdef class Quaternion:
         cdef double inv = rsqrt(mag_sq)
         return Quaternion(self.x * inv, self.y * inv, self.z * inv, self.w * inv)
 
-    cpdef Quaternion inverse(self):
+    cdef Quaternion c_inverse(self):
         cdef double mag_sq = self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w
 
         if mag_sq < EPSILON:
@@ -160,8 +203,8 @@ cdef class Quaternion:
         cdef double inv = 1.0 / mag_sq
         return Quaternion(-self.x * inv, -self.y * inv, -self.z * inv, self.w * inv)
 
-    cpdef Quaternion slerp(self, Quaternion other, double t):
-        cdef double d = self.dot(other)
+    cdef Quaternion c_slerp(self, Quaternion other, double t):
+        cdef double d = self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
         cdef double ox = other.x
         cdef double oy = other.y
         cdef double oz = other.z
@@ -192,58 +235,112 @@ cdef class Quaternion:
             s0 * self.w + s1 * ow,
         )
 
-    cpdef list to_list(self):
-        return [self.x, self.y, self.z, self.w]
+    cdef Vector3 c_to_euler(self, str order):
+        cdef double xx = self.x * self.x
+        cdef double yy = self.y * self.y
+        cdef double zz = self.z * self.z
+        cdef double xy = self.x * self.y
+        cdef double xz = self.x * self.z
+        cdef double xw = self.x * self.w
+        cdef double yz = self.y * self.z
+        cdef double yw = self.y * self.w
+        cdef double zw = self.z * self.w
 
-    def to_euler(self, order: str = "ZXY") -> Vector3:
-        cdef double sqx = self.x * self.x
-        cdef double sqy = self.y * self.y
-        cdef double sqz = self.z * self.z
-        cdef double sqw = self.w * self.w
-        cdef double siny = 2.0 * (self.w * self.y - self.x * self.z)
-        cdef double sinx_zxy
-
-        cdef double ex, ey, ez
+        cdef double ex, ey, ez, test
 
         if order == "ZXY":
-            sinx_zxy = 2.0 * (self.w * self.x + self.y * self.z)
-            if math.fabs(sinx_zxy) >= 1.0:
-                ex = math.copysign(90.0, sinx_zxy)
-                ey = to_degree(math.atan2(2.0 * (self.x * self.z + self.w * self.y), sqw + sqx - sqy - sqz))
+            # X = asin(m32), m32 = 2(yz+xw)
+            test = 2.0 * (yz + xw)
+            if test > 1.0 - EPSILON:
+                ex = 90.0
+                ey = 0.0
+                ez = to_degree(math.atan2(2.0 * (xy + zw), 1.0 - 2.0 * (yy + zz)))
+            elif test < -1.0 + EPSILON:
+                ex = -90.0
+                ey = 0.0
+                ez = to_degree(math.atan2(2.0 * (xy + zw), 1.0 - 2.0 * (yy + zz)))
+            else:
+                ex = to_degree(math.asin(test))
+                ey = to_degree(math.atan2(2.0 * (yw - xz), 1.0 - 2.0 * (xx + yy)))
+                ez = to_degree(math.atan2(2.0 * (zw - xy), 1.0 - 2.0 * (xx + zz)))
+        elif order == "XYZ":
+            # Y = asin(m13), m13 = 2(xz+yw)
+            test = 2.0 * (xz + yw)
+            if test > 1.0 - EPSILON:
+                ey = 90.0
+                ex = to_degree(math.atan2(2.0 * (yz + xw), 1.0 - 2.0 * (xx + zz)))
+                ez = 0.0
+            elif test < -1.0 + EPSILON:
+                ey = -90.0
+                ex = to_degree(math.atan2(2.0 * (yz + xw), 1.0 - 2.0 * (xx + zz)))
                 ez = 0.0
             else:
-                ex = to_degree(math.asin(sinx_zxy))
-                ey = to_degree(math.atan2(2.0 * (self.w * self.y - self.x * self.z), 1.0 - 2.0 * (sqx + sqy)))
-                ez = to_degree(math.atan2(2.0 * (self.w * self.z - self.x * self.y), 1.0 - 2.0 * (sqx + sqz)))
+                ey = to_degree(math.asin(test))
+                ex = to_degree(math.atan2(2.0 * (xw - yz), 1.0 - 2.0 * (xx + yy)))
+                ez = to_degree(math.atan2(2.0 * (zw - xy), 1.0 - 2.0 * (yy + zz)))
+        elif order == "YXZ":
+            # X = asin(-m23), -m23 = 2(xw-yz)
+            test = 2.0 * (xw - yz)
+            if test > 1.0 - EPSILON:
+                ex = 90.0
+                ey = to_degree(math.atan2(2.0 * (yw - xz), 1.0 - 2.0 * (yy + zz)))
+                ez = 0.0
+            elif test < -1.0 + EPSILON:
+                ex = -90.0
+                ey = to_degree(math.atan2(2.0 * (yw - xz), 1.0 - 2.0 * (yy + zz)))
+                ez = 0.0
+            else:
+                ex = to_degree(math.asin(test))
+                ey = to_degree(math.atan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy)))
+                ez = to_degree(math.atan2(2.0 * (xy + zw), 1.0 - 2.0 * (xx + zz)))
+        elif order == "ZYX":
+            # Y = asin(-m31), -m31 = 2(yw-xz)
+            test = 2.0 * (yw - xz)
+            if test > 1.0 - EPSILON:
+                ey = 90.0
+                ex = 0.0
+                ez = to_degree(math.atan2(2.0 * (zw - xy), 1.0 - 2.0 * (xx + zz)))
+            elif test < -1.0 + EPSILON:
+                ey = -90.0
+                ex = 0.0
+                ez = to_degree(math.atan2(2.0 * (zw - xy), 1.0 - 2.0 * (xx + zz)))
+            else:
+                ey = to_degree(math.asin(test))
+                ex = to_degree(math.atan2(2.0 * (yz + xw), 1.0 - 2.0 * (xx + yy)))
+                ez = to_degree(math.atan2(2.0 * (xy + zw), 1.0 - 2.0 * (yy + zz)))
+        elif order == "YZX":
+            # Z = asin(m21), m21 = 2(xy+zw)
+            test = 2.0 * (xy + zw)
+            if test > 1.0 - EPSILON:
+                ez = 90.0
+                ex = 0.0
+                ey = to_degree(math.atan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy)))
+            elif test < -1.0 + EPSILON:
+                ez = -90.0
+                ex = 0.0
+                ey = to_degree(math.atan2(2.0 * (xz + yw), 1.0 - 2.0 * (xx + yy)))
+            else:
+                ez = to_degree(math.asin(test))
+                ex = to_degree(math.atan2(2.0 * (xw - yz), 1.0 - 2.0 * (xx + zz)))
+                ey = to_degree(math.atan2(2.0 * (yw - xz), 1.0 - 2.0 * (yy + zz)))
+        elif order == "XZY":
+            # Z = asin(-m12), -m12 = 2(zw-xy)
+            test = 2.0 * (zw - xy)
+            if test > 1.0 - EPSILON:
+                ez = 90.0
+                ex = to_degree(math.atan2(2.0 * (xw - yz), 1.0 - 2.0 * (xx + yy)))
+                ey = 0.0
+            elif test < -1.0 + EPSILON:
+                ez = -90.0
+                ex = to_degree(math.atan2(2.0 * (xw - yz), 1.0 - 2.0 * (xx + yy)))
+                ey = 0.0
+            else:
+                ez = to_degree(math.asin(test))
+                ex = to_degree(math.atan2(2.0 * (yz + xw), 1.0 - 2.0 * (xx + zz)))
+                ey = to_degree(math.atan2(2.0 * (xz + yw), 1.0 - 2.0 * (yy + zz)))
         else:
-            if math.fabs(siny) >= 1.0:
-                ex = to_degree(math.atan2(2.0 * (self.x * self.y + self.w * self.z), sqw + sqx - sqy - sqz))
-                ey = math.copysign(90.0, siny)
-                ez = 0.0
-            else:
-                ex = to_degree(math.atan2(2.0 * (self.y * self.z + self.w * self.x), 1.0 - 2.0 * (sqx + sqy)))
-                ey = to_degree(math.asin(siny))
-                ez = to_degree(math.atan2(2.0 * (self.x * self.y + self.w * self.z), 1.0 - 2.0 * (sqy + sqz)))
+            ex = 0.0
+            ey = 0.0
+            ez = 0.0
 
         return Vector3(ex, ey, ez)
-
-    cdef Vector3 c_mul_vector(self, Vector3 other):
-        cdef double ix = self.w * other.x + self.y * other.z - self.z * other.y
-        cdef double iy = self.w * other.y + self.z * other.x - self.x * other.z
-        cdef double iz = self.w * other.z + self.x * other.y - self.y * other.x
-        cdef double iw = -self.x * other.x - self.y * other.y - self.z * other.z
-
-        return Vector3(
-            ix * self.w + iw * (-self.x) + iy * (-self.z) - iz * (-self.y),
-            iy * self.w + iw * (-self.y) + iz * (-self.x) - ix * (-self.z),
-            iz * self.w + iw * (-self.z) + ix * (-self.y) - iy * (-self.x),
-        )
-
-    cdef Quaternion c_mul_quat(self, Quaternion other):
-        return Quaternion(
-            self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y,
-            self.w * other.y + self.y * other.w + self.z * other.x - self.x * other.z,
-            self.w * other.z + self.z * other.w + self.x * other.y - self.y * other.x,
-            self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z,
-        )
-

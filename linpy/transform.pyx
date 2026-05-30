@@ -32,7 +32,7 @@ cdef class Transform:
         """Set the local position and propagate world transforms."""
         if self._local_position != value:
             self._local_position = value
-            self._propagate()
+            self.c_propagate()
 
     @property
     def local_rotation(self) -> Quaternion:
@@ -44,7 +44,7 @@ cdef class Transform:
         """Set the local rotation and propagate world transforms."""
         if self._local_rotation != value:
             self._local_rotation = value
-            self._propagate()
+            self.c_propagate()
 
     @property
     def position(self) -> Vector3:
@@ -58,10 +58,10 @@ cdef class Transform:
             if self._parent is None:
                 self._local_position = value
             else:
-                self._local_position = self._parent._rotation.inverse().c_mul_vector(
+                self._local_position = self._parent._rotation.c_inverse().c_mul_vector(
                     value.c_sub_vector(self._parent._position)
                 )
-            self._propagate()
+            self.c_propagate()
 
     @property
     def rotation(self) -> Quaternion:
@@ -75,8 +75,8 @@ cdef class Transform:
             if self._parent is None:
                 self._local_rotation = value
             else:
-                self._local_rotation = self._parent._rotation.inverse().c_mul_quat(value)
-            self._propagate()
+                self._local_rotation = self._parent._rotation.c_inverse().c_mul_quat(value)
+            self.c_propagate()
 
     @property
     def parent(self) -> Transform:
@@ -92,36 +92,22 @@ cdef class Transform:
         if value is self:
             raise ValueError("A transform cannot be its own parent")
 
-        if isinstance(value, Transform) and self._is_descendant(<Transform>value):
+        if isinstance(value, Transform) and self.c_is_descendant(<Transform>value):
             raise ValueError("Cannot set a descendant as parent")
 
         # Detach from the current parent
         if self._parent is not None:
-            self._parent._remove_child(self)
+            self._parent.c_remove_child(self)
 
         # Attach to the new parent, or promote to world root
         if isinstance(value, Transform):
             self._parent = <Transform>value
-            self._parent._add_child(self)
+            self._parent.c_append_child(self)
         else:
             self._parent = None
 
         # Recompute world transform and propagate to children
-        self._propagate()
-
-    cpdef void set_local_pos_rot(self, Vector3 local_position, Quaternion local_rotation):
-        """Set local position and rotation in one call, propagating once."""
-        if self._local_position != local_position or self._local_rotation != local_rotation:
-            self._local_position = local_position
-            self._local_rotation = local_rotation
-            self._propagate()
-
-    cpdef void set_local_pos_rot_parent(self, Vector3 local_position, Quaternion local_rotation, Transform parent):
-        """Set local position, rotation and parent in one call."""
-        if self._local_position != local_position or self._local_rotation != local_rotation or self._parent is not parent:
-            self._local_position = local_position
-            self._local_rotation = local_rotation
-            self.parent = parent
+        self.c_propagate()
 
     @property
     def x_dir(self) -> Vector3:
@@ -142,7 +128,7 @@ cdef class Transform:
         return f"Transform({self._name!r}, {self._position!r}, {self._rotation!r})"
 
     def __str__(self) -> str:
-        return self._name + ": [Pos: " + str(self._position) + ", Rot: " + str(self._rotation.to_euler()) + "]"
+        return self._name + ": [Pos: " + str(self._position) + ", Rot: " + str(self._rotation.c_to_euler("ZXY")) + "]"
 
     def __mul__(self, other):
         """Compose this transform with another object.
@@ -184,39 +170,51 @@ cdef class Transform:
         (<Transform>self._children[key]).parent = self
 
     cpdef Transform inverse(self):
-        """Compute the inverse of this transform."""
-        cdef Quaternion inv_rot = self._rotation.inverse()
-        cdef Vector3 neg_pos = Vector3(-self._position.x, -self._position.y, -self._position.z)
-        cdef Vector3 inv_pos = inv_rot.c_mul_vector(neg_pos)
-        return Transform(inv_pos, inv_rot, self._name + "_inv")
+        return self.c_inverse()
+
+    cpdef void set_local_pos_rot(self, Vector3 local_position, Quaternion local_rotation):
+        self.c_set_local_pos_rot(local_position, local_rotation)
+
+    cpdef void set_local_pos_rot_parent(self, Vector3 local_position, Quaternion local_rotation, Transform parent):
+        self.c_set_local_pos_rot_parent(local_position, local_rotation, parent)
+
+    cpdef Vector3 world_to_local(self, Vector3 world_pos):
+        """Transform a world-space position into this transform's local space."""
+        return self.c_world_to_local(world_pos)
+
+    cpdef Vector3 local_to_world(self, Vector3 local_pos):
+        """Transform a local-space position into world space."""
+        return self.c_local_to_world(local_pos)
 
     cpdef void rotate(self, Quaternion rotation):
         """Apply an additional rotation to this transform."""
-        self.rotation = self._rotation.c_mul_quat(rotation)
+        self.c_rotate(rotation)
 
     cpdef void translate(self, Vector3 translation):
         """Translate this transform in its local space."""
-        self.position = self._rotation.c_mul_vector(translation).c_add_vector(self._position)
+        self.c_translate(translation)
 
     cpdef void add_child(self, Transform transform):
         """Add a child transform to this node."""
-        transform.parent = self
+        self.c_add_child(transform)
 
-    cdef void _add_child(self, Transform transform):
+        
+
+    cdef void c_append_child(self, Transform transform):
         self._children.append(transform)
 
-    cdef void _remove_child(self, Transform transform):
+    cdef void c_remove_child(self, Transform transform):
         if transform in self._children:
             self._children.remove(transform)
 
-    cdef bint _is_descendant(self, Transform transform):
+    cdef bint c_is_descendant(self, Transform transform):
         cdef Transform child
         for child in self._children:
-            if child is transform or child._is_descendant(transform):
+            if child is transform or child.c_is_descendant(transform):
                 return True
         return False
 
-    cdef void _propagate(self):
+    cdef void c_propagate(self):
         """Recalculate this transform's world position/rotation from its locals,
         then recursively propagate to all children."""
         cdef list stack = [self]
@@ -240,10 +238,56 @@ cdef class Transform:
             for child in transform._children:
                 stack.append(child)
 
-    cpdef Vector3 world_to_local(self, Vector3 world_pos):
-        """Transform a world-space position into this transform's local space."""
-        return self._rotation.inverse().c_mul_vector(world_pos.c_sub_vector(self._position))
+    cdef Transform c_inverse(self):
+        """Compute the inverse of this transform."""
+        cdef Quaternion inv_rot = self._rotation.c_inverse()
+        cdef Vector3 inv_pos = inv_rot.c_mul_vector(Vector3(-self._position.x, -self._position.y, -self._position.z))
+        return Transform(inv_pos, inv_rot, self._name + "_inv")
 
-    cpdef Vector3 local_to_world(self, Vector3 local_pos):
+    cdef void c_set_local_pos_rot(self, Vector3 local_position, Quaternion local_rotation):
+        """Set local position and rotation in one call, propagating once."""
+        if self._local_position != local_position or self._local_rotation != local_rotation:
+            self._local_position = local_position
+            self._local_rotation = local_rotation
+            self.c_propagate()
+
+    cdef void c_set_local_pos_rot_parent(self, Vector3 local_position, Quaternion local_rotation, Transform parent):
+        """Set local position, rotation and parent in one call."""
+        if self._local_position != local_position or self._local_rotation != local_rotation or self._parent is not parent:
+            self._local_position = local_position
+            self._local_rotation = local_rotation
+            self.parent = parent
+
+    cdef Vector3 c_world_to_local(self, Vector3 world_pos):
+        """Transform a world-space position into this transform's local space."""
+        return self._rotation.c_inverse().c_mul_vector(world_pos.c_sub_vector(self._position))
+
+    cdef Vector3 c_local_to_world(self, Vector3 local_pos):
         """Transform a local-space position into world space."""
         return self._rotation.c_mul_vector(local_pos).c_add_vector(self._position)
+
+    cdef void c_rotate(self, Quaternion rotation):
+        """Apply an additional rotation to this transform."""
+        cdef Quaternion new_rot = self._rotation.c_mul_quat(rotation)
+        if self._parent is None:
+            self._local_rotation = new_rot
+        else:
+            self._local_rotation = self._parent._rotation.c_inverse().c_mul_quat(new_rot)
+        self.c_propagate()
+
+    cdef void c_translate(self, Vector3 translation):
+        """Translate this transform in its local space."""
+        cdef Vector3 new_pos = self._rotation.c_mul_vector(translation).c_add_vector(self._position)
+        if self._parent is None:
+            self._local_position = new_pos
+        else:
+            self._local_position = self._parent._rotation.c_inverse().c_mul_vector(
+                new_pos.c_sub_vector(self._parent._position)
+            )
+        self.c_propagate()
+
+    cdef void c_add_child(self, Transform transform):
+        """Add a child transform to this node."""
+        transform.parent = self
+
+

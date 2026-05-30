@@ -62,6 +62,25 @@ cdef class SceneGraph:
         :param local_position: Local position relative to the parent.
         :param local_rotation: Local rotation relative to the parent.
         """
+        self.c_apply_transform(transform_name, parent_name, local_position, local_rotation)
+
+    cpdef void remove(self, str transform_name):
+        """Remove a transform from the scene graph by name.
+
+        Children of the removed transform are reparented to its parent.
+        Does nothing if the name is not found.
+
+        :param transform_name: Name of the transform to remove.
+        """
+        self.c_remove(transform_name)
+
+    cpdef void print_graph(self):
+        """Print the entire scene graph hierarchy to stdout."""
+        print_tree(0, self._root)
+
+
+
+    cdef void c_apply_transform(self, str transform_name, str parent_name, Vector3 local_position, Quaternion local_rotation):
         cdef Transform parent
         cdef Transform t
 
@@ -73,39 +92,28 @@ cdef class SceneGraph:
         else:
             # Parent not seen yet — create a placeholder under root
             parent = Transform(Vector3(0.0, 0.0, 0.0), Quaternion(0.0, 0.0, 0.0, 1.0), parent_name)
-            self._root.add_child(parent)
+            self._root.c_add_child(parent)
             self._transforms[parent_name] = parent
 
         if transform_name in self._transforms:
             t = <Transform>self._transforms[transform_name]
 
-            if t.parent is not parent:
-                t.set_local_pos_rot_parent(local_position, local_rotation, parent)
+            if t._parent is not parent:
+                t.c_set_local_pos_rot_parent(local_position, local_rotation, parent)
             else:
-                t.set_local_pos_rot(local_position, local_rotation)
+                t.c_set_local_pos_rot(local_position, local_rotation)
         else:
             # Brand-new transform
             t = Transform(local_position, local_rotation, transform_name)
-            parent.add_child(t)
+            parent.c_add_child(t)
             self._transforms[transform_name] = t
 
-    cpdef void print_graph(self):
-        """Print the entire scene graph hierarchy to stdout."""
-        print_tree(0, self._root)
-
-    cpdef void remove(self, str transform_name):
-        """Remove a transform from the scene graph by name.
-
-        Children of the removed transform are reparented to its parent.
-        Does nothing if the name is not found.
-
-        :param transform_name: Name of the transform to remove.
-        """
+    cdef void c_remove(self, str transform_name):
         if transform_name not in self._transforms:
             return
 
         cdef Transform t = <Transform>self._transforms.pop(transform_name)
-        cdef Transform parent_t = <Transform>t.parent if t.parent is not None else None
+        cdef Transform parent_t = t._parent
         cdef Transform child
 
         for child in list(t):

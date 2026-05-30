@@ -2,6 +2,8 @@ from .vector3 cimport Vector3
 
 cdef double EPSILON
 
+cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order)
+
 cdef class Quaternion:
     cdef readonly double x, y, z, w
 
@@ -14,3 +16,11 @@ cdef class Quaternion:
 
     cdef Vector3 c_mul_vector(self, Vector3 other)
     cdef Quaternion c_mul_quat(self, Quaternion other)
+
+    cdef double c_dot(self, Quaternion other)
+    cdef void c_normalize(self)
+    cdef Quaternion c_normalized(self)
+    cdef Quaternion c_inverse(self)
+    cdef Quaternion c_slerp(self, Quaternion other, double t)
+    cdef Vector3 c_to_euler(self, str order)
+    

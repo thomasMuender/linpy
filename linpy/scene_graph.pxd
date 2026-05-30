@@ -9,3 +9,6 @@ cdef class SceneGraph:
     cpdef void apply_transform(self, str transform_name, str parent_name, Vector3 local_position, Quaternion local_rotation)
     cpdef void remove(self, str transform_name)
     cpdef void print_graph(self)
+
+    cdef void c_apply_transform(self, str transform_name, str parent_name, Vector3 local_position, Quaternion local_rotation)
+    cdef void c_remove(self, str transform_name)

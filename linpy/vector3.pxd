@@ -24,3 +24,12 @@ cdef class Vector3:
 
     cdef Vector3 c_div_vector(self, Vector3 other)
     cdef Vector3 c_div_double(self, double other)
+
+    cdef double c_dot(self, Vector3 other)
+    cdef double c_magnitude(self)
+    cdef void c_normalize(self)
+    cdef Vector3 c_normalized(self)
+    cdef Vector3 c_cross(self, Vector3 other)
+    cdef Vector3 c_lerp(self, Vector3 other, double t)
+    cdef double c_distance(self, Vector3 other)
+
