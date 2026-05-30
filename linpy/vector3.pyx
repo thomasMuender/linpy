@@ -259,6 +259,9 @@ cdef class Vector3:
     cpdef list to_list(self):
         return [self.x, self.y, self.z]
 
+    cpdef Vector3 translate(self, Vector3 other):
+        return self.c_add_vector(other)
+
 
     cdef Vector3 c_add_vector(self, Vector3 other):
         return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)

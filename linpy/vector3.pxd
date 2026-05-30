@@ -12,6 +12,7 @@ cdef class Vector3:
     cpdef Vector3 lerp(self, Vector3 other, double t)
     cpdef double distance(self, Vector3 other)
     cpdef list to_list(self)
+    cpdef Vector3 translate(self, Vector3 other)
 
     cdef Vector3 c_add_vector(self, Vector3 other)
     cdef Vector3 c_add_double(self, double other)
@@ -32,4 +33,3 @@ cdef class Vector3:
     cdef Vector3 c_cross(self, Vector3 other)
     cdef Vector3 c_lerp(self, Vector3 other, double t)
     cdef double c_distance(self, Vector3 other)
-

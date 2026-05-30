@@ -151,6 +151,39 @@ cdef class Quaternion:
     def to_euler(self, order: str = "ZXY") -> Vector3:
         return self.c_to_euler(order)
 
+    cpdef Quaternion rotate_x(self, double degrees):
+        cdef double half = to_radians(degrees) * 0.5
+        cdef double s = math.sin(half)
+        cdef double c = math.cos(half)
+        return Quaternion(
+            self.w * s + self.x * c,
+            self.y * c + self.z * s,
+            self.z * c - self.y * s,
+            self.w * c - self.x * s,
+        )
+
+    cpdef Quaternion rotate_y(self, double degrees):
+        cdef double half = to_radians(degrees) * 0.5
+        cdef double s = math.sin(half)
+        cdef double c = math.cos(half)
+        return Quaternion(
+            self.x * c - self.z * s,
+            self.w * s + self.y * c,
+            self.z * c + self.x * s,
+            self.w * c - self.y * s,
+        )
+
+    cpdef Quaternion rotate_z(self, double degrees):
+        cdef double half = to_radians(degrees) * 0.5
+        cdef double s = math.sin(half)
+        cdef double c = math.cos(half)
+        return Quaternion(
+            self.x * c + self.y * s,
+            self.y * c - self.x * s,
+            self.w * s + self.z * c,
+            self.w * c - self.z * s,
+        )
+
     cdef Vector3 c_mul_vector(self, Vector3 other):
         cdef double tx = 2.0 * (self.y * other.z - self.z * other.y)
         cdef double ty = 2.0 * (self.z * other.x - self.x * other.z)

@@ -187,3 +187,68 @@ class TestQuaternionMisc:
     def test_str(self):
         q = Quaternion(0.0, 0.0, 0.0, 1.0)
         assert "[0.0, 0.0, 0.0, 1.0]" == str(q)
+
+
+class TestQuaternionRotateAxis:
+    def test_rotate_x_90(self):
+        q = Quaternion.identity().rotate_x(90.0)
+        expected = Quaternion.from_euler(90.0, 0.0, 0.0)
+        assert q == expected
+
+    def test_rotate_y_90(self):
+        q = Quaternion.identity().rotate_y(90.0)
+        expected = Quaternion.from_euler(0.0, 90.0, 0.0)
+        assert q == expected
+
+    def test_rotate_z_90(self):
+        q = Quaternion.identity().rotate_z(90.0)
+        expected = Quaternion.from_euler(0.0, 0.0, 90.0)
+        assert q == expected
+
+    def test_rotate_x_applies_to_vector(self):
+        q = Quaternion.identity().rotate_x(90.0)
+        v = Vector3(0.0, 1.0, 0.0)
+        result = q * v
+        assert result == Vector3(0.0, 0.0, 1.0)
+
+    def test_rotate_y_applies_to_vector(self):
+        q = Quaternion.identity().rotate_y(90.0)
+        v = Vector3(1.0, 0.0, 0.0)
+        result = q * v
+        assert result == Vector3(0.0, 0.0, -1.0)
+
+    def test_rotate_z_applies_to_vector(self):
+        q = Quaternion.identity().rotate_z(90.0)
+        v = Vector3(1.0, 0.0, 0.0)
+        result = q * v
+        assert result == Vector3(0.0, 1.0, 0.0)
+
+    def test_rotate_x_chained(self):
+        q = Quaternion.identity().rotate_x(45.0).rotate_x(45.0)
+        expected = Quaternion.from_euler(90.0, 0.0, 0.0)
+        assert q == expected
+
+    def test_rotate_y_chained(self):
+        q = Quaternion.identity().rotate_y(30.0).rotate_y(60.0)
+        expected = Quaternion.from_euler(0.0, 90.0, 0.0)
+        assert q == expected
+
+    def test_rotate_z_chained(self):
+        q = Quaternion.identity().rotate_z(20.0).rotate_z(70.0)
+        expected = Quaternion.from_euler(0.0, 0.0, 90.0)
+        assert q == expected
+
+    def test_rotate_x_zero(self):
+        q = Quaternion.from_euler(30.0, 45.0, 60.0)
+        result = q.rotate_x(0.0)
+        assert result == q
+
+    def test_rotate_y_zero(self):
+        q = Quaternion.from_euler(30.0, 45.0, 60.0)
+        result = q.rotate_y(0.0)
+        assert result == q
+
+    def test_rotate_z_zero(self):
+        q = Quaternion.from_euler(30.0, 45.0, 60.0)
+        result = q.rotate_z(0.0)
+        assert result == q

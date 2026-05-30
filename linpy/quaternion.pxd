@@ -13,6 +13,9 @@ cdef class Quaternion:
     cpdef Quaternion inverse(self)
     cpdef Quaternion slerp(self, Quaternion other, double t)
     cpdef list to_list(self)
+    cpdef Quaternion rotate_x(self, double degrees)
+    cpdef Quaternion rotate_y(self, double degrees)
+    cpdef Quaternion rotate_z(self, double degrees)
 
     cdef Vector3 c_mul_vector(self, Vector3 other)
     cdef Quaternion c_mul_quat(self, Quaternion other)
