@@ -3,6 +3,7 @@ from .vector3 cimport Vector3
 cdef double EPSILON
 
 cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order)
+cdef Quaternion c_from_rotation_matrix(list matrix)
 
 cdef class Quaternion:
     cdef readonly double x, y, z, w

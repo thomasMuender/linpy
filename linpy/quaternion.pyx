@@ -54,6 +54,57 @@ cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order):
 
     return Quaternion(qx, qy, qz, qw)
 
+cdef Quaternion c_from_rotation_matrix(list matrix):
+    if len(matrix) != 3:
+        raise ValueError("Rotation matrix must be 3x3")
+
+    cdef list row0 = matrix[0]
+    cdef list row1 = matrix[1]
+    cdef list row2 = matrix[2]
+
+    if len(row0) != 3 or len(row1) != 3 or len(row2) != 3:
+        raise ValueError("Rotation matrix must be 3x3")
+
+    cdef double m00 = row0[0]
+    cdef double m01 = row0[1]
+    cdef double m02 = row0[2]
+    cdef double m10 = row1[0]
+    cdef double m11 = row1[1]
+    cdef double m12 = row1[2]
+    cdef double m20 = row2[0]
+    cdef double m21 = row2[1]
+    cdef double m22 = row2[2]
+
+    cdef double trace = m00 + m11 + m22
+    cdef double s, qx, qy, qz, qw
+
+    if trace > 0.0:
+        s = math.sqrt(trace + 1.0) * 2.0
+        qw = 0.25 * s
+        qx = (m21 - m12) / s
+        qy = (m02 - m20) / s
+        qz = (m10 - m01) / s
+    elif m00 > m11 and m00 > m22:
+        s = math.sqrt(1.0 + m00 - m11 - m22) * 2.0
+        qw = (m21 - m12) / s
+        qx = 0.25 * s
+        qy = (m01 + m10) / s
+        qz = (m02 + m20) / s
+    elif m11 > m22:
+        s = math.sqrt(1.0 + m11 - m00 - m22) * 2.0
+        qw = (m02 - m20) / s
+        qx = (m01 + m10) / s
+        qy = 0.25 * s
+        qz = (m12 + m21) / s
+    else:
+        s = math.sqrt(1.0 + m22 - m00 - m11) * 2.0
+        qw = (m10 - m01) / s
+        qx = (m02 + m20) / s
+        qy = (m12 + m21) / s
+        qz = 0.25 * s
+
+    return Quaternion(qx, qy, qz, qw)
+
 cdef class Quaternion:
     def __cinit__(self, double x, double y, double z, double w):
         self.x = x
@@ -109,6 +160,10 @@ cdef class Quaternion:
     @staticmethod
     def from_euler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion:
         return c_from_euler(degX, degY, degZ, order)
+
+    @staticmethod
+    def from_rotation_matrix(matrix: list[list[float]]) -> Quaternion:
+        return c_from_rotation_matrix(matrix)
 
     @staticmethod
     def from_iterable(iterable) -> Quaternion:

@@ -1,7 +1,7 @@
 # scene_graph.pyx — Cython implementation of SceneGraph
 from .transform cimport Transform
 from .vector3 cimport Vector3
-from .quaternion cimport Quaternion
+from .quaternion cimport Quaternion, c_from_rotation_matrix
 
 def print_tree(int depth, Transform transform):
     """Recursively print the transform hierarchy as an indented tree.
@@ -64,6 +64,19 @@ cdef class SceneGraph:
         """
         self.c_apply_transform(transform_name, parent_name, local_position, local_rotation)
 
+    cpdef void apply_transformation_matrix(self, str transform_name, str parent_name, list matrix):
+        """Add or update a named transform from a 4x4 transformation matrix.
+
+        The matrix is expected in column-vector layout (translation in the last
+        column) without scale, as returned by numpy's ``tolist()``.
+
+        :param transform_name: Name of the transform to add or update.
+        :param parent_name: Name of the parent transform.
+        :param matrix: 4x4 transformation matrix as nested lists.
+        :raises ValueError: If the matrix is not 4x4.
+        """
+        self.c_apply_transformation_matrix(transform_name, parent_name, matrix)
+
     cpdef void remove(self, str transform_name):
         """Remove a transform from the scene graph by name.
 
@@ -107,6 +120,24 @@ cdef class SceneGraph:
             t = Transform(local_position, local_rotation, transform_name)
             parent.c_add_child(t)
             self._transforms[transform_name] = t
+
+    cdef void c_apply_transformation_matrix(self, str transform_name, str parent_name, list matrix):
+        if len(matrix) != 4:
+            raise ValueError("Transformation matrix must be 4x4")
+
+        cdef list row
+        for row in matrix:
+            if len(row) != 4:
+                raise ValueError("Transformation matrix must be 4x4")
+
+        cdef list r0 = matrix[0]
+        cdef list r1 = matrix[1]
+        cdef list r2 = matrix[2]
+
+        cdef Vector3 position = Vector3(r0[3], r1[3], r2[3])
+        cdef Quaternion rotation = c_from_rotation_matrix([r0[:3], r1[:3], r2[:3]])
+
+        self.c_apply_transform(transform_name, parent_name, position, rotation)
 
     cdef void c_remove(self, str transform_name):
         if transform_name not in self._transforms:
