@@ -54,6 +54,60 @@ cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order):
 
     return Quaternion(qx, qy, qz, qw)
 
+cdef Quaternion c_look_at(Vector3 forward, Vector3 up):
+    cdef double forward_mag_sq = forward.c_dot(forward)
+    if forward_mag_sq < EPSILON:
+        raise ValueError("forward vector must not be zero")
+
+    cdef double up_mag_sq = up.c_dot(up)
+    if up_mag_sq < EPSILON:
+        raise ValueError("up vector must not be zero")
+
+    cdef Vector3 xaxis = forward.c_normalized()
+    cdef Vector3 yaxis_raw = up.c_cross(xaxis)
+    cdef double yaxis_mag_sq = yaxis_raw.c_dot(yaxis_raw)
+
+    if yaxis_mag_sq < EPSILON:
+        raise ValueError("forward and up vectors must not be parallel")
+
+    cdef Vector3 yaxis = yaxis_raw.c_normalized()
+    cdef Vector3 zaxis = xaxis.c_cross(yaxis)
+
+    # Rotation matrix columns are the images of the local x/y/z axes in world space
+    cdef double m00 = xaxis.x, m01 = yaxis.x, m02 = zaxis.x
+    cdef double m10 = xaxis.y, m11 = yaxis.y, m12 = zaxis.y
+    cdef double m20 = xaxis.z, m21 = yaxis.z, m22 = zaxis.z
+
+    cdef double trace = m00 + m11 + m22
+    cdef double s, qx, qy, qz, qw
+
+    if trace > 0.0:
+        s = math.sqrt(trace + 1.0) * 2.0
+        qw = 0.25 * s
+        qx = (m21 - m12) / s
+        qy = (m02 - m20) / s
+        qz = (m10 - m01) / s
+    elif m00 > m11 and m00 > m22:
+        s = math.sqrt(1.0 + m00 - m11 - m22) * 2.0
+        qw = (m21 - m12) / s
+        qx = 0.25 * s
+        qy = (m01 + m10) / s
+        qz = (m02 + m20) / s
+    elif m11 > m22:
+        s = math.sqrt(1.0 + m11 - m00 - m22) * 2.0
+        qw = (m02 - m20) / s
+        qx = (m01 + m10) / s
+        qy = 0.25 * s
+        qz = (m12 + m21) / s
+    else:
+        s = math.sqrt(1.0 + m22 - m00 - m11) * 2.0
+        qw = (m10 - m01) / s
+        qx = (m02 + m20) / s
+        qy = (m12 + m21) / s
+        qz = 0.25 * s
+
+    return Quaternion(qx, qy, qz, qw)
+
 cdef Quaternion c_from_rotation_matrix(list matrix):
     if len(matrix) != 3:
         raise ValueError("Rotation matrix must be 3x3")
@@ -160,6 +214,10 @@ cdef class Quaternion:
     @staticmethod
     def from_euler(degX: float, degY: float, degZ: float, order: str = "ZXY") -> Quaternion:
         return c_from_euler(degX, degY, degZ, order)
+
+    @staticmethod
+    def look_at(forward: Vector3, up: Vector3) -> Quaternion:
+        return c_look_at(forward, up)
 
     @staticmethod
     def from_rotation_matrix(matrix: list[list[float]]) -> Quaternion:

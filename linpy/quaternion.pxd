@@ -4,6 +4,7 @@ cdef double EPSILON
 
 cdef Quaternion c_from_euler(double degX, double degY, double degZ, str order)
 cdef Quaternion c_from_rotation_matrix(list matrix)
+cdef Quaternion c_look_at(Vector3 forward, Vector3 up)
 
 cdef class Quaternion:
     cdef readonly double x, y, z, w
